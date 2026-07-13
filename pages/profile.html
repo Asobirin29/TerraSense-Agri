@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil — TerraSense Agri</title>
+    <meta name="description" content="Kelola profil petani Anda di TerraSense Agri.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/TerraSense-Agri/assets/css/style.css">
+    <style>
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 32px;
+            margin-bottom: 24px;
+            border-top: 3px solid var(--color-terracotta);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle at top right, rgba(198, 123, 92, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .profile-avatar-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 3px solid var(--color-terracotta);
+            overflow: hidden;
+            background: var(--color-linen);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-avatar-placeholder {
+            font-size: 2.8rem;
+            color: var(--color-soil);
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+        }
+
+        .avatar-upload-btn {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--color-terracotta);
+            border: 3px solid var(--color-base-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            color: white;
+        }
+
+        .avatar-upload-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-warm);
+        }
+
+        .profile-info {
+            z-index: 1;
+        }
+
+        .profile-info h1 {
+            font-size: 1.7rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-bark);
+            margin-bottom: 4px;
+        }
+
+        .profile-info .profile-email {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-bottom: 10px;
+        }
+
+        .profile-info .profile-location {
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .profile-info .profile-location i {
+            color: var(--color-terracotta);
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .profile-section {
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+
+        .profile-section h3 {
+            font-size: 1.1rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-bark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-section h3 i {
+            color: var(--color-terracotta);
+        }
+
+        .profile-bio {
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+            padding: 16px;
+            background: var(--color-linen);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            border-left: 3px solid var(--color-sage);
+        }
+
+        .profile-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .profile-meta-item {
+            padding: 14px;
+            background: var(--color-linen);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+        }
+
+        .profile-meta-label {
+            font-size: 0.65rem;
+            color: var(--color-text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .profile-meta-value {
+            font-size: 0.9rem;
+            color: var(--color-text-primary);
+            font-weight: 500;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .danger-zone {
+            border-color: rgba(191, 69, 69, 0.2);
+            border-top: 3px solid var(--color-danger);
+        }
+
+        .danger-zone h3 {
+            color: var(--color-danger) !important;
+        }
+
+        .danger-zone h3 i {
+            color: var(--color-danger) !important;
+        }
+
+        @media (max-width: 768px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 24px 20px;
+            }
+            .profile-stats {
+                grid-template-columns: 1fr;
+            }
+            .profile-meta-grid {
+                grid-template-columns: 1fr;
+            }
+            .profile-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar" id="navbar"></header>
+
+    <!-- Page Loader -->
+    <div class="page-loader" id="page-loader">
+        <div class="spinner spinner-lg"></div>
+        <p class="text-sm text-muted">Memuat profil...</p>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container" id="main-content" style="padding-top: 20px; padding-bottom: 40px; display: none;">
+
+        <!-- Profile Header -->
+        <div class="glass-panel profile-header animate-slide-up" id="profile-header">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar" id="profile-avatar">
+                    <span class="profile-avatar-placeholder" id="avatar-placeholder">P</span>
+                </div>
+                <label class="avatar-upload-btn" for="avatar-input" title="Ganti Foto Profil"><i class="ph ph-camera"></i></label>
+                <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none">
+            </div>
+            <div class="profile-info">
+                <h1 id="profile-name">—</h1>
+                <p class="profile-email" id="profile-email">—</p>
+                <p class="profile-location" id="profile-location"><i class="ph-fill ph-map-pin"></i> —</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="profile-stats">
+            <div class="stat-card animate-slide-up stagger-1">
+                <div class="stat-value" id="stat-farms">0</div>
+                <div class="stat-label">Lahan Terdaftar</div>
+            </div>
+            <div class="stat-card animate-slide-up stagger-2">
+                <div class="stat-value" id="stat-area">0</div>
+                <div class="stat-label">Total Area (Ha)</div>
+            </div>
+            <div class="stat-card animate-slide-up stagger-3">
+                <div class="stat-value" id="stat-joined">—</div>
+                <div class="stat-label">Bergabung Sejak</div>
+            </div>
+        </div>
+
+        <!-- Bio Section -->
+        <div class="glass-panel profile-section animate-slide-up stagger-4" id="bio-section">
+            <h3><i class="ph-fill ph-note-pencil"></i> Tentang Saya</h3>
+            <div class="profile-bio" id="profile-bio">
+                Belum ada bio. Klik edit untuk menambahkan.
+            </div>
+        </div>
+
+        <!-- Edit Profile Section -->
+        <div class="glass-panel profile-section animate-slide-up stagger-5" id="edit-section">
+            <h3><i class="ph-fill ph-pencil-simple"></i> Edit Profil</h3>
+            <form id="edit-form">
+                <div class="profile-meta-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-name">Nama Lengkap</label>
+                        <input type="text" id="edit-name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-phone">No. HP</label>
+                        <input type="tel" id="edit-phone" class="form-input" placeholder="08xxxxxxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-location">Lokasi</label>
+                        <input type="text" id="edit-location" class="form-input" placeholder="Sumedang, Jawa Barat">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-email">Email</label>
+                        <input type="email" id="edit-email" class="form-input" disabled style="opacity:0.5; cursor:not-allowed;">
+                        <span class="form-hint">Email tidak dapat diubah</span>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 8px;">
+                    <label class="form-label" for="edit-bio">Bio</label>
+                    <textarea id="edit-bio" class="form-input" placeholder="Ceritakan tentang Anda dan perkebunan Anda..." rows="4"></textarea>
+                </div>
+                <div class="profile-actions">
+                    <button type="submit" class="btn btn-primary" id="save-btn"><i class="ph ph-floppy-disk"></i> Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="glass-panel profile-section danger-zone animate-slide-up stagger-6">
+            <h3><i class="ph-fill ph-warning"></i> Zona Bahaya</h3>
+            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 16px;">
+                Keluar dari akun Anda. Anda perlu login kembali untuk mengakses dashboard.
+            </p>
+            <button class="btn btn-danger btn-sm" id="logout-btn">
+                <i class="ph ph-sign-out"></i> Logout
+            </button>
+        </div>
+    </main>
+
+    <script src="/TerraSense-Agri/assets/js/app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const user = await App.checkAuth();
+        if (!user) return;
+
+        App.renderNavbar(user, 'profile');
+
+        // Load profile data
+        await loadProfile();
+
+        document.getElementById('page-loader').classList.add('hidden');
+        document.getElementById('main-content').style.display = 'block';
+
+        // Avatar upload
+        document.getElementById('avatar-input').addEventListener('change', handleAvatarUpload);
+
+        // Edit form
+        document.getElementById('edit-form').addEventListener('submit', handleEditProfile);
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            App.logout();
+        });
+    });
+
+    async function loadProfile() {
+        try {
+            const data = await App.api('profile.php?action=get');
+            const u = data.user;
+
+            // Avatar
+            const avatarEl = document.getElementById('profile-avatar');
+            const placeholderEl = document.getElementById('avatar-placeholder');
+            if (u.avatar) {
+                avatarEl.innerHTML = `<img src="${App.uploadBase}${u.avatar}" alt="${u.name}">`;
+            } else {
+                placeholderEl.textContent = u.name.charAt(0).toUpperCase();
+            }
+
+            // Info
+            document.getElementById('profile-name').textContent = u.name;
+            document.getElementById('profile-email').textContent = u.email;
+            document.getElementById('profile-location').innerHTML = '<i class="ph-fill ph-map-pin"></i> ' + (u.location || 'Belum diatur');
+
+            // Bio
+            document.getElementById('profile-bio').textContent = u.bio || 'Belum ada bio. Klik edit untuk menambahkan.';
+
+            // Stats
+            App.animateNumber(document.getElementById('stat-farms'), parseInt(u.total_farms) || 0, 0, 600);
+            App.animateNumber(document.getElementById('stat-area'), parseFloat(u.total_area) || 0, 2, 800);
+            document.getElementById('stat-joined').textContent = App.formatDate(u.created_at);
+            document.getElementById('stat-joined').style.fontSize = '0.85rem';
+
+            // Fill edit form
+            document.getElementById('edit-name').value = u.name || '';
+            document.getElementById('edit-phone').value = u.phone || '';
+            document.getElementById('edit-location').value = u.location || '';
+            document.getElementById('edit-email').value = u.email || '';
+            document.getElementById('edit-bio').value = u.bio || '';
+
+        } catch (err) {
+            App.toast('Gagal memuat profil', 'error');
+        }
+    }
+
+    async function handleAvatarUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            App.toast('Ukuran file maksimal 2MB', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+            const res = await fetch(`${App.apiBase}/profile.php?action=avatar`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                App.toast('Foto profil berhasil diperbarui!', 'success');
+                // Refresh avatar
+                const avatarEl = document.getElementById('profile-avatar');
+                avatarEl.innerHTML = `<img src="${App.uploadBase}${data.avatar}?t=${Date.now()}" alt="Avatar">`;
+                // Reload navbar
+                const user = await App.checkAuth(false);
+                if (user) App.renderNavbar(user, 'profile');
+            } else {
+                App.toast(data.message, 'error');
+            }
+        } catch (err) {
+            App.toast('Gagal mengupload foto', 'error');
+        }
+    }
+
+    async function handleEditProfile(e) {
+        e.preventDefault();
+        const btn = document.getElementById('save-btn');
+
+        const name = document.getElementById('edit-name').value.trim();
+        const phone = document.getElementById('edit-phone').value.trim();
+        const location = document.getElementById('edit-location').value.trim();
+        const bio = document.getElementById('edit-bio').value.trim();
+
+        if (!name || name.length < 2) {
+            App.toast('Nama harus minimal 2 karakter', 'error');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner spinner-sm"></span> Menyimpan...';
+
+        try {
+            const data = await App.api('profile.php?action=update', {
+                method: 'POST',
+                body: JSON.stringify({ name, phone, bio, location }),
+            });
+
+            App.toast(data.message, 'success');
+            await loadProfile();
+
+            // Reload navbar
+            const user = await App.checkAuth(false);
+            if (user) App.renderNavbar(user, 'profile');
+
+        } catch (err) {
+            App.toast(err.message || 'Gagal menyimpan profil', 'error');
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Simpan Perubahan';
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraSense Agri — Platform Precision Farming untuk Petani Indonesia</title>
+    <meta name="description" content="Platform Precision Farming gratis untuk petani Indonesia. Petakan lahan, analisis kondisi lingkungan, dan dapatkan rekomendasi tanaman & pupuk presisi.">
+    <meta name="keywords" content="precision farming, pertanian cerdas, sumedang, peta lahan, rekomendasi pupuk, TerraSense">
+    <meta name="author" content="TerraSense Agri">
+    <meta name="theme-color" content="#181412">
+    <meta property="og:title" content="TerraSense Agri — Precision Farming untuk Petani Indonesia">
+    <meta property="og:description" content="Petakan lahan pertanian & dapatkan rekomendasi tanaman + dosis pupuk presisi. 100% gratis.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/TerraSense-Agri/assets/css/style.css">
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+
+        /* === Hero Section === */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-parchment) 50%, var(--color-linen) 100%);
+        }
+
+        /* Organic decorative shapes */
+        .hero-deco-1 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            background: radial-gradient(circle, rgba(124, 148, 115, 0.08) 0%, transparent 70%);
+            top: -100px;
+            right: -100px;
+            animation: floatOrganic 18s ease-in-out infinite;
+        }
+
+        .hero-deco-2 {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            border-radius: 40% 60% 70% 30% / 40% 70% 30% 60%;
+            background: radial-gradient(circle, rgba(198, 123, 92, 0.06) 0%, transparent 70%);
+            bottom: -80px;
+            left: -80px;
+            animation: floatOrganic 22s ease-in-out infinite reverse;
+        }
+
+        .hero-deco-3 {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 30% 70% 60% 40% / 50% 40% 60% 50%;
+            background: radial-gradient(circle, rgba(232, 213, 183, 0.3) 0%, transparent 70%);
+            top: 30%;
+            left: 10%;
+            animation: floatOrganic 15s ease-in-out infinite;
+            animation-delay: -5s;
+        }
+
+        @keyframes floatOrganic {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(15px, -10px) rotate(2deg); }
+            66% { transform: translate(-10px, 8px) rotate(-1deg); }
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 660px;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            border-radius: var(--radius-full);
+            background: rgba(124, 148, 115, 0.1);
+            border: 1px solid rgba(124, 148, 115, 0.2);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--color-moss);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 32px;
+            animation: fadeSlideDown 0.6s ease forwards;
+        }
+
+        .hero-logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--color-sage);
+            animation: fadeSlideUp 0.7s ease forwards;
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            line-height: 1.15;
+            margin-bottom: 8px;
+            color: var(--color-bark);
+            animation: fadeSlideUp 0.7s ease forwards;
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .hero-title span {
+            color: var(--color-terracotta);
+        }
+
+        .hero-tagline {
+            font-size: 1.15rem;
+            font-weight: 400;
+            color: var(--color-text-muted);
+            margin-bottom: 12px;
+            letter-spacing: 0.01em;
+            animation: fadeSlideUp 0.7s ease forwards;
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        .hero-desc {
+            font-size: 0.95rem;
+            color: var(--color-text-secondary);
+            max-width: 500px;
+            margin: 0 auto 40px;
+            line-height: 1.75;
+            animation: fadeSlideUp 0.7s ease forwards;
+            animation-delay: 0.4s;
+            opacity: 0;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            animation: fadeSlideUp 0.7s ease forwards;
+            animation-delay: 0.5s;
+            opacity: 0;
+        }
+
+        .hero-cta {
+            padding: 16px 40px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: var(--radius-full);
+            background: var(--color-soil);
+            color: var(--color-wheat);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(92, 64, 51, 0.2);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .hero-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(92, 64, 51, 0.25);
+            background: var(--color-clay);
+            color: var(--color-wheat);
+            text-decoration: none;
+        }
+
+        .hero-cta-secondary {
+            padding: 16px 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            background: var(--color-surface);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .hero-cta-secondary:hover {
+            background: var(--color-surface-hover);
+            border-color: var(--color-border-hover);
+            color: var(--color-text-primary);
+            text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-panel);
+        }
+
+        /* === Organic Wave Separator === */
+        .wave-separator {
+            position: relative;
+            height: 80px;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .wave-separator svg {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+        }
+
+        /* === Features Section === */
+        .features {
+            padding: 80px 0;
+            position: relative;
+            z-index: 1;
+            background: var(--color-surface);
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .features-header h2 {
+            font-size: 2.2rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-bark);
+            margin-bottom: 12px;
+        }
+
+        .features-header p {
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            padding: 28px 24px;
+            text-align: left;
+            transition: all var(--transition-smooth);
+            border-left: 3px solid transparent;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-left-color: var(--color-terracotta);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            color: var(--color-terracotta);
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(198, 123, 92, 0.08);
+            border-radius: var(--radius-md);
+        }
+
+        .feature-title {
+            font-size: 1.05rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-bark);
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            line-height: 1.65;
+        }
+
+        /* === Steps Section (Timeline) === */
+        .steps {
+            padding: 80px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .steps-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .steps-header h2 {
+            font-size: 2.2rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-bark);
+            margin-bottom: 12px;
+        }
+
+        .steps-timeline {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            padding-left: 40px;
+        }
+
+        /* Vine line */
+        .steps-timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--color-terracotta), var(--color-sage), var(--color-wheat));
+            border-radius: 2px;
+        }
+
+        .step-item {
+            position: relative;
+            padding: 0 0 48px 24px;
+        }
+
+        .step-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .step-dot {
+            position: absolute;
+            left: -33px;
+            top: 4px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--color-surface);
+            border: 3px solid var(--color-terracotta);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--color-terracotta);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            z-index: 2;
+        }
+
+        .step-item:nth-child(2) .step-dot {
+            border-color: var(--color-sage);
+            color: var(--color-sage);
+        }
+
+        .step-item:nth-child(3) .step-dot {
+            border-color: var(--color-soil);
+            color: var(--color-soil);
+        }
+
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-bark);
+            margin-bottom: 8px;
+        }
+
+        .step-desc {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            line-height: 1.65;
+        }
+
+        /* === CTA Section === */
+        .cta-section {
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-box {
+            max-width: 620px;
+            margin: 0 auto;
+            padding: 52px 36px;
+            background: linear-gradient(135deg, rgba(198, 123, 92, 0.06), rgba(124, 148, 115, 0.04));
+            border: 1px solid var(--color-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-terracotta), var(--color-sage), var(--color-terracotta));
+        }
+
+        .cta-box h2 {
+            font-size: 2rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-bark);
+            margin-bottom: 12px;
+        }
+
+        .cta-box p {
+            font-size: 0.9rem;
+            color: var(--color-text-muted);
+            margin-bottom: 28px;
+            max-width: 420px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-features {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 24px;
+            font-size: 0.78rem;
+            color: var(--color-text-dim);
+        }
+
+        .cta-features span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cta-features i {
+            color: var(--color-sage);
+        }
+
+        /* === Footer === */
+        .footer {
+            padding: 32px 0;
+            border-top: 1px solid var(--color-border);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--color-text-dim);
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-brand {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1rem;
+            color: var(--color-bark);
+            margin-bottom: 6px;
+        }
+
+        .footer-brand span {
+            color: var(--color-terracotta);
+        }
+
+        /* === Responsive === */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.4rem; }
+            .hero-tagline { font-size: 1rem; }
+            .hero-desc { font-size: 0.88rem; }
+            .hero-cta, .hero-cta-secondary { padding: 14px 28px; font-size: 0.9rem; }
+            .features-grid { grid-template-columns: 1fr; max-width: 440px; }
+            .features-header h2, .steps-header h2 { font-size: 1.8rem; }
+            .hero-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================ -->
+    <!-- HERO SECTION                                 -->
+    <!-- ============================================ -->
+    <section class="hero">
+        <div class="hero-deco-1"></div>
+        <div class="hero-deco-2"></div>
+        <div class="hero-deco-3"></div>
+        <div class="hero-content">
+            <div class="hero-badge"><i class="ph ph-leaf"></i> Platform Pertanian Digital</div>
+            <div class="hero-logo"><i class="ph-fill ph-plant"></i></div>
+            <h1 class="hero-title">
+                Terra<span>Sense</span>
+            </h1>
+            <p class="hero-tagline">Solusi Manajemen Lahan untuk Petani Modern</p>
+            <p class="hero-desc">
+                Petakan batas lahan Anda, pantau kondisi lingkungan secara real-time, 
+                dan dapatkan wawasan seputar tanaman dan pemupukan dengan mudah.
+            </p>
+            <div class="hero-actions">
+                <a href="/TerraSense-Agri/pages/register.html" class="hero-cta" id="cta-register">
+                    Daftar Gratis
+                </a>
+                <a href="/TerraSense-Agri/pages/login.html" class="hero-cta-secondary" id="cta-login">
+                    Masuk
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Wave Separator -->
+    <div class="wave-separator">
+        <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+            <path d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z" fill="#2A221D"/>
+        </svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FEATURES SECTION                             -->
+    <!-- ============================================ -->
+    <section class="features">
+        <div class="container">
+            <div class="features-header">
+                <h2>Kenapa TerraSense?</h2>
+                <p>Platform manajemen lahan untuk membantu operasional pertanian harian Anda.</p>
+            </div>
+            <div class="features-grid">
+                <div class="glass-panel feature-card">
+                    <div class="feature-icon"><i class="ph-fill ph-map-trifold"></i></div>
+                    <div class="feature-title">Pemetaan Digital</div>
+                    <div class="feature-desc">Gambarkan batas lahan Anda langsung di atas peta interaktif dan hitung luas lahan otomatis.</div>
+                </div>
+                <div class="glass-panel feature-card">
+                    <div class="feature-icon"><i class="ph-fill ph-thermometer"></i></div>
+                    <div class="feature-title">Data Cuaca</div>
+                    <div class="feature-desc">Dapatkan informasi suhu, kelembapan, dan data lingkungan langsung dari layanan cuaca global.</div>
+                </div>
+                <div class="glass-panel feature-card">
+                    <div class="feature-icon"><i class="ph-fill ph-plant"></i></div>
+                    <div class="feature-title">Wawasan Pertanian</div>
+                    <div class="feature-desc">Terima panduan tanaman dan strategi pupuk yang disesuaikan dengan profil agro-klimatologi Anda.</div>
+                </div>
+                <div class="glass-panel feature-card">
+                    <div class="feature-icon"><i class="ph-fill ph-user-circle"></i></div>
+                    <div class="feature-title">Satu Akun Terpusat</div>
+                    <div class="feature-desc">Kelola profil Anda dan simpan seluruh data lahan di satu dashboard yang terorganisir.</div>
+                </div>
+                <div class="glass-panel feature-card">
+                    <div class="feature-icon"><i class="ph-fill ph-chart-bar"></i></div>
+                    <div class="feature-title">Dashboard Analitik</div>
+                    <div class="feature-desc">Pantau statistik keseluruhan lahan dan riwayat analisis Anda dengan tampilan visual yang rapi.</div>
+                </div>
+                <div class="glass-panel feature-card">
+                    <div class="feature-icon"><i class="ph-fill ph-check-circle"></i></div>
+                    <div class="feature-title">Akses Gratis</div>
+                    <div class="feature-desc">Seluruh fitur inti TerraSense dapat digunakan secara bebas biaya.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- HOW IT WORKS (Timeline)                      -->
+    <!-- ============================================ -->
+    <section class="steps">
+        <div class="container">
+            <div class="steps-header">
+                <h2>Cara Menggunakan</h2>
+            </div>
+            <div class="steps-timeline">
+                <div class="step-item">
+                    <div class="step-dot">1</div>
+                    <div class="step-title">Daftar & Login</div>
+                    <div class="step-desc">Buat akun petani gratis dalam hitungan detik. Tidak perlu verifikasi rumit.</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-dot">2</div>
+                    <div class="step-title">Petakan Lahan</div>
+                    <div class="step-desc">Buka peta satelit, gambar batas lahan Anda, dan sistem akan menganalisis secara otomatis.</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-dot">3</div>
+                    <div class="step-title">Terima Rekomendasi</div>
+                    <div class="step-desc">Dapatkan rekomendasi tanaman terbaik, strategi pupuk, dan dosis presisi untuk lahan Anda.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- CTA SECTION                                  -->
+    <!-- ============================================ -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="glass-panel cta-box">
+                <h2>Siap Mengelola Lahan Anda?</h2>
+                <p>Bergabung dengan TerraSense Agri dan mulailah mendigitalkan operasional pertanian Anda.</p>
+                <a href="/TerraSense-Agri/pages/register.html" class="hero-cta">
+                    Mulai Sekarang
+                </a>
+                <div class="cta-features">
+                    <span><i class="ph ph-shield-check"></i> Aman & Terpercaya</span>
+                    <span><i class="ph ph-device-mobile"></i> Responsif di HP</span>
+                    <span><i class="ph ph-clock"></i> Akses 24/7</span>
+                    <span><i class="ph ph-gift"></i> Gratis Digunakan</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- FOOTER                                       -->
+    <!-- ============================================ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-brand">Terra<span>Sense</span> Agri</div>
+            <p>© 2026 — Dibuat untuk petani Indonesia</p>
+        </div>
+    </footer>
+
+    <script src="/TerraSense-Agri/assets/js/app.js"></script>
+    <script>
+    // If already logged in, redirect to dashboard
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const res = await fetch(`${App.apiBase}/auth.php?action=check`);
+            const data = await res.json();
+            if (data.authenticated) {
+                // Update CTAs to go to dashboard instead
+                document.getElementById('cta-register').href = '/TerraSense-Agri/pages/dashboard.html';
+                document.getElementById('cta-register').innerHTML = 'Buka Dashboard';
+                document.getElementById('cta-login').style.display = 'none';
+            }
+        } catch (e) {
+            // Not logged in, keep default links
+        }
+    });
+    </script>
+</body>
+</html>

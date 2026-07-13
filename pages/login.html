@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masuk — TerraSense Agri</title>
+    <meta name="description" content="Masuk ke akun TerraSense Agri Anda untuk mengelola lahan pertanian dan mendapatkan rekomendasi presisi.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/TerraSense-Agri/assets/css/style.css">
+    <style>
+        .auth-page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Decorative side */
+        .auth-decoration {
+            background: linear-gradient(135deg, var(--color-soil) 0%, var(--color-clay) 50%, var(--color-terracotta) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-decoration::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cpath d='M0 80 Q40 40 80 80' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1'/%3E%3Cpath d='M0 60 Q40 20 80 60' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3C/svg%3E") repeat;
+            background-size: 80px 80px;
+        }
+
+        .auth-deco-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            color: var(--color-wheat);
+        }
+
+        .auth-deco-icon {
+            font-size: 5rem;
+            margin-bottom: 24px;
+            opacity: 0.9;
+        }
+
+        .auth-deco-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.2rem;
+            font-weight: 400;
+            margin-bottom: 12px;
+            color: var(--color-wheat);
+        }
+
+        .auth-deco-desc {
+            font-size: 0.95rem;
+            opacity: 0.75;
+            max-width: 320px;
+            line-height: 1.7;
+        }
+
+        .auth-deco-features {
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .auth-deco-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        .auth-deco-feature i {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Form side */
+        .auth-form-side {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: var(--color-cream);
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-header {
+            text-align: left;
+            margin-bottom: 36px;
+        }
+
+        .auth-logo {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            color: var(--color-sage);
+        }
+
+        .auth-title {
+            font-size: 2rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+        }
+
+        .auth-title span:first-child { color: var(--color-bark); }
+        .auth-title span:last-child { color: var(--color-terracotta); }
+
+        .auth-subtitle {
+            font-size: 0.88rem;
+            color: var(--color-text-muted);
+            margin-top: 8px;
+        }
+
+        .auth-card {
+            padding: 0;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 28px;
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+        }
+
+        .auth-footer a {
+            font-weight: 600;
+            color: var(--color-terracotta);
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px;
+            color: var(--color-text-muted);
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 28px 0;
+            color: var(--color-text-dim);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--color-border);
+        }
+
+        .form-error-box {
+            background: rgba(191, 69, 69, 0.06);
+            border: 1px solid rgba(191, 69, 69, 0.2);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            color: var(--color-danger);
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .auth-page { grid-template-columns: 1fr; }
+            .auth-decoration { display: none; }
+            .auth-form-side { padding: 32px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-page">
+        <!-- Decorative Side -->
+        <div class="auth-decoration">
+            <div class="auth-deco-content">
+                <div class="auth-deco-icon"><i class="ph-fill ph-plant"></i></div>
+                <h2 class="auth-deco-title">Selamat Datang<br>Kembali</h2>
+                <p class="auth-deco-desc">
+                    Kelola lahan pertanian Anda dan dapatkan wawasan presisi untuk hasil panen yang lebih baik.
+                </p>
+                <div class="auth-deco-features">
+                    <div class="auth-deco-feature">
+                        <i class="ph-fill ph-map-trifold"></i>
+                        <span>Pemetaan lahan digital</span>
+                    </div>
+                    <div class="auth-deco-feature">
+                        <i class="ph-fill ph-thermometer"></i>
+                        <span>Analisis cuaca real-time</span>
+                    </div>
+                    <div class="auth-deco-feature">
+                        <i class="ph-fill ph-plant"></i>
+                        <span>Rekomendasi tanaman presisi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Side -->
+        <div class="auth-form-side">
+            <div class="auth-container animate-fade-in">
+                <!-- Header -->
+                <div class="auth-header">
+                    <div class="auth-logo"><i class="ph-fill ph-plant"></i></div>
+                    <h1 class="auth-title">
+                        <span>Terra</span><span>Sense</span>
+                    </h1>
+                    <p class="auth-subtitle">Masuk ke akun petani Anda</p>
+                </div>
+
+                <!-- Login Form -->
+                <div class="auth-card">
+                    <div class="form-error-box" id="login-error"></div>
+
+                    <form id="login-form" autocomplete="on">
+                        <div class="form-group">
+                            <label class="form-label" for="login-email">Email</label>
+                            <input type="email" id="login-email" class="form-input" placeholder="petani@example.com" required autocomplete="email">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="login-password">Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="login-password" class="form-input" placeholder="Masukkan password" required autocomplete="current-password" style="padding-right: 36px">
+                                <button type="button" class="toggle-password" tabindex="-1">
+                                    <span class="eye-icon"><i class="ph ph-eye"></i></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg btn-full" style="margin-top: 12px;">
+                            Masuk ke Dashboard
+                        </button>
+                    </form>
+
+                    <div class="auth-divider">atau</div>
+
+                    <a href="/TerraSense-Agri/pages/register.html" class="btn btn-secondary btn-full">
+                        Buat Akun Petani Baru
+                    </a>
+                </div>
+
+                <!-- Footer -->
+                <div class="auth-footer">
+                    <a href="/TerraSense-Agri/">← Kembali ke Beranda</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/TerraSense-Agri/assets/js/app.js"></script>
+    <script src="/TerraSense-Agri/assets/js/auth.js"></script>
+</body>
+</html>

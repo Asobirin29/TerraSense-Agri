@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — TerraSense Agri</title>
+    <meta name="description" content="Dashboard petani TerraSense Agri. Kelola lahan, lihat statistik, dan pantau riwayat analisis pertanian Anda.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/TerraSense-Agri/assets/css/style.css">
+    <style>
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .farm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .farm-card {
+            background: var(--color-base-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            transition: all var(--transition-smooth);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border-top: 3px solid var(--color-sage);
+        }
+
+        .farm-card:hover {
+            border-color: var(--color-border-hover);
+            background: var(--color-surface-hover);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .farm-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .farm-card-name {
+            font-size: 1.1rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-bark);
+            margin-bottom: 4px;
+        }
+
+        .farm-card-meta {
+            font-size: 0.72rem;
+            color: var(--color-text-muted);
+        }
+
+        .farm-card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .farm-stat-item {
+            background: var(--color-linen);
+            border-radius: var(--radius-sm);
+            padding: 10px 8px;
+            text-align: center;
+        }
+
+        .farm-stat-value {
+            font-size: 1.05rem;
+            font-weight: 800;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-soil);
+        }
+
+        .farm-stat-label {
+            font-size: 0.6rem;
+            color: var(--color-text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 2px;
+        }
+
+        .farm-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .farm-card-actions .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.78rem;
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--color-parchment), var(--color-linen));
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 28px 32px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            border-left: 4px solid var(--color-terracotta);
+        }
+
+        .welcome-text h2 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            font-family: 'DM Serif Display', serif;
+            color: var(--color-bark);
+            margin-bottom: 6px;
+        }
+
+        .welcome-text p {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+        }
+
+        .recent-section {
+            margin-top: 40px;
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .recent-item:hover {
+            border-color: var(--color-border-hover);
+            background: var(--color-surface-hover);
+            box-shadow: var(--shadow-panel);
+        }
+
+        .recent-item + .recent-item {
+            margin-top: 8px;
+        }
+
+        .recent-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            background: var(--color-linen);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            color: var(--color-terracotta);
+        }
+
+        .recent-info { flex: 1; min-width: 0; }
+        .recent-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+        .recent-meta {
+            font-size: 0.72rem;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
+        .recent-time {
+            font-size: 0.72rem;
+            color: var(--color-text-dim);
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .farm-grid {
+                grid-template-columns: 1fr;
+            }
+            .welcome-banner {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar" id="navbar"></header>
+
+    <!-- Page Loader -->
+    <div class="page-loader" id="page-loader">
+        <div class="spinner spinner-lg"></div>
+        <p class="text-sm text-muted">Memuat dashboard...</p>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container" id="main-content" style="padding-top: 20px; padding-bottom: 40px; display: none;">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner animate-slide-up" id="welcome-banner">
+            <div class="welcome-text">
+                <h2 id="welcome-name">Selamat Datang!</h2>
+                <p>Kelola lahan pertanian Anda dan dapatkan rekomendasi presisi</p>
+            </div>
+            <a href="/TerraSense-Agri/pages/farm-map.html" class="btn btn-primary">
+                <i class="ph ph-plus-circle"></i> Tambah Lahan Baru
+            </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="dashboard-stats" id="stats-container">
+            <div class="stat-card animate-slide-up stagger-1">
+                <div class="stat-value" id="stat-farms">0</div>
+                <div class="stat-label">Total Lahan</div>
+            </div>
+            <div class="stat-card animate-slide-up stagger-2">
+                <div class="stat-value" id="stat-area">0</div>
+                <div class="stat-label">Total Area (Ha)</div>
+            </div>
+            <div class="stat-card animate-slide-up stagger-3">
+                <div class="stat-value" id="stat-analyses">0</div>
+                <div class="stat-label">Total Analisis</div>
+            </div>
+            <div class="stat-card animate-slide-up stagger-4" style="border-left-color: var(--color-terracotta);">
+                <div class="stat-value" id="stat-zone" style="color: var(--color-terracotta); font-size: 1rem;">—</div>
+                <div class="stat-label">Zona Dominan</div>
+            </div>
+        </div>
+
+        <!-- Farms Section -->
+        <div>
+            <div class="section-title" style="font-size: 0.8rem; margin-bottom: 20px;">
+                <i class="ph-fill ph-map-trifold"></i> Lahan Saya
+            </div>
+            <div class="farm-grid" id="farms-container">
+                <!-- Farms loaded dynamically -->
+            </div>
+        </div>
+
+        <!-- Recent Analyses -->
+        <div class="recent-section" id="recent-section" style="display: none;">
+            <div class="section-title" style="font-size: 0.8rem; margin-bottom: 16px;">
+                <i class="ph-fill ph-chart-line-up"></i> Analisis Terbaru
+            </div>
+            <div id="recent-container">
+                <!-- Recent analyses loaded dynamically -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="delete-modal">
+        <div class="glass-panel modal p-6">
+            <h3 style="font-size: 1.2rem; font-weight: 400; font-family: 'DM Serif Display', serif; color: var(--color-text-primary); margin-bottom: 8px;"><i class="ph-fill ph-warning-circle text-danger"></i> Hapus Lahan</h3>
+            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 24px;">
+                Apakah Anda yakin ingin menghapus lahan ini? Semua data analisis terkait juga akan dihapus. Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div class="flex gap-3" style="justify-content: flex-end;">
+                <button class="btn btn-outline btn-sm" id="delete-cancel">Batal</button>
+                <button class="btn btn-danger btn-sm" id="delete-confirm"><i class="ph ph-trash"></i> Hapus Lahan</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/TerraSense-Agri/assets/js/app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const user = await App.checkAuth();
+        if (!user) return;
+
+        // Render navbar
+        App.renderNavbar(user, 'dashboard');
+
+        // Welcome message
+        const hour = new Date().getHours();
+        let greeting = 'Selamat Malam';
+        if (hour >= 5 && hour < 12) greeting = 'Selamat Pagi';
+        else if (hour >= 12 && hour < 15) greeting = 'Selamat Siang';
+        else if (hour >= 15 && hour < 18) greeting = 'Selamat Sore';
+
+        document.getElementById('welcome-name').textContent = `${greeting}, ${user.name}!`;
+
+        // Load data
+        await Promise.all([loadFarms(), loadRecentAnalyses()]);
+
+        // Show content
+        document.getElementById('page-loader').classList.add('hidden');
+        document.getElementById('main-content').style.display = 'block';
+    });
+
+    let farmToDelete = null;
+
+    async function loadFarms() {
+        try {
+            const data = await App.api('farms.php');
+            const container = document.getElementById('farms-container');
+
+            if (!data.farms || data.farms.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon"><i class="ph-fill ph-map-trifold"></i></div>
+                        <div class="empty-state-title">Belum Ada Lahan</div>
+                        <div class="empty-state-desc">Mulai petakan lahan pertanian Anda dan dapatkan rekomendasi tanaman & pupuk presisi.</div>
+                        <a href="/TerraSense-Agri/pages/farm-map.html" class="btn btn-primary">
+                            <i class="ph ph-plus-circle"></i> Mulai Pemetaan Lahan
+                        </a>
+                    </div>`;
+                return;
+            }
+
+            // Update stats
+            const totalArea = data.farms.reduce((sum, f) => sum + parseFloat(f.area_ha || 0), 0);
+            const totalAnalyses = data.farms.reduce((sum, f) => sum + parseInt(f.analysis_count || 0), 0);
+
+            App.animateNumber(document.getElementById('stat-farms'), data.farms.length, 0, 600);
+            App.animateNumber(document.getElementById('stat-area'), totalArea, 2, 800);
+            App.animateNumber(document.getElementById('stat-analyses'), totalAnalyses, 0, 600);
+
+            // Dominant zone
+            const zoneCounts = {};
+            data.farms.forEach(f => {
+                zoneCounts[f.zone] = (zoneCounts[f.zone] || 0) + 1;
+            });
+            const dominantZone = Object.entries(zoneCounts).sort((a, b) => b[1] - a[1])[0];
+            if (dominantZone) {
+                document.getElementById('stat-zone').textContent = App.getZoneName(dominantZone[0]);
+            }
+
+            // Render farm cards
+            container.innerHTML = data.farms.map((farm, index) => `
+                <div class="farm-card animate-slide-up stagger-${Math.min(index + 1, 6)}" data-farm-id="${farm.id}">
+                    <div class="farm-card-header">
+                        <div>
+                            <div class="farm-card-name">${farm.name}</div>
+                            <div class="farm-card-meta">
+                                Dibuat ${App.formatDate(farm.created_at)}
+                                ${farm.last_analyzed ? ' • Analisis terakhir ' + App.timeAgo(farm.last_analyzed) : ''}
+                            </div>
+                        </div>
+                        <span class="${App.getZoneBadgeClass(farm.zone)}">${App.getZoneName(farm.zone)}</span>
+                    </div>
+                    <div class="farm-card-stats">
+                        <div class="farm-stat-item">
+                            <div class="farm-stat-value">${parseFloat(farm.area_ha).toFixed(2)}</div>
+                            <div class="farm-stat-label">Hektar</div>
+                        </div>
+                        <div class="farm-stat-item">
+                            <div class="farm-stat-value" style="color: var(--color-sunset);">${Math.round(farm.elevation)}</div>
+                            <div class="farm-stat-label">MDPL</div>
+                        </div>
+                        <div class="farm-stat-item">
+                            <div class="farm-stat-value" style="color: var(--color-sage);">${farm.analysis_count || 0}</div>
+                            <div class="farm-stat-label">Analisis</div>
+                        </div>
+                    </div>
+                    <div class="farm-card-actions">
+                        <a href="/TerraSense-Agri/pages/farm-map.html?id=${farm.id}" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();">
+                            <i class="ph ph-map-trifold"></i> Buka Peta
+                        </a>
+                        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); confirmDelete(${farm.id}, '${farm.name}');">
+                            <i class="ph ph-trash"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            console.error('Failed to load farms:', err);
+            App.toast('Gagal memuat data lahan', 'error');
+        }
+    }
+
+    async function loadRecentAnalyses() {
+        try {
+            const data = await App.api('farms.php?action=recent');
+            if (!data.analyses || data.analyses.length === 0) return;
+
+            const section = document.getElementById('recent-section');
+            const container = document.getElementById('recent-container');
+            section.style.display = 'block';
+
+            container.innerHTML = data.analyses.map(a => `
+                <div class="recent-item">
+                    <div class="recent-icon">${App.getZoneEmoji(a.zone)}</div>
+                    <div class="recent-info">
+                        <div class="recent-name">${a.farm_name}</div>
+                        <div class="recent-meta">${a.temperature}°C • ${a.humidity}% kelembapan • ${App.getZoneName(a.zone)}</div>
+                    </div>
+                    <div class="recent-time">${App.timeAgo(a.analyzed_at)}</div>
+                </div>
+            `).join('');
+        } catch (err) {
+            // Ignore — optional section
+        }
+    }
+
+    function confirmDelete(farmId, farmName) {
+        farmToDelete = farmId;
+        document.getElementById('delete-modal').classList.add('active');
+    }
+
+    document.getElementById('delete-cancel').addEventListener('click', () => {
+        farmToDelete = null;
+        document.getElementById('delete-modal').classList.remove('active');
+    });
+
+    document.getElementById('delete-confirm').addEventListener('click', async () => {
+        if (!farmToDelete) return;
+        try {
+            await App.api('farms.php?action=delete', {
+                method: 'POST',
+                body: JSON.stringify({ id: farmToDelete }),
+            });
+            App.toast('Lahan berhasil dihapus', 'success');
+            document.getElementById('delete-modal').classList.remove('active');
+            farmToDelete = null;
+            await loadFarms();
+        } catch (err) {
+            App.toast(err.message || 'Gagal menghapus lahan', 'error');
+        }
+    });
+    </script>
+</body>
+</html>
