@@ -1,376 +1,166 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masuk — TerraSense Agri</title>
-    <meta name="description" content="Masuk ke akun TerraSense Agri Anda untuk mengelola lahan pertanian dan mendapatkan rekomendasi presisi.">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <title>Masuk - TerraSense Agri</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="/TerraSense-Agri/assets/css/style.css">
+    
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "background": "#fff8f3",
+              "deep-moss": "#2D4B3F",
+              "primary": "#163429",
+              "sunset-gold": "#E4A853",
+              "warm-parchment": "#F4EDE1",
+              "burnt-terracotta": "#C35E3D",
+              "slate-soil": "#4A4238",
+              "sage-accent": "#8A9A5B",
+              "linen-light": "#FAF9F6",
+              "error": "#ba1a1a",
+              "error-container": "#ffdad6",
+              "on-error-container": "#93000a",
+            },
+            fontFamily: {
+              "button": ["Plus Jakarta Sans"],
+              "body-sm": ["Plus Jakarta Sans"],
+              "body-md": ["Plus Jakarta Sans"],
+              "headline-lg": ["DM Serif Display"],
+              "display-hero": ["DM Serif Display"],
+              "label-caps": ["Plus Jakarta Sans"],
+            },
+            fontSize: {
+              "button": ["14px", {"lineHeight": "1", "fontWeight": "600"}],
+              "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "700"}],
+            }
+          },
+        },
+      }
+    </script>
     <style>
-        .auth-page {
-            min-height: 100vh;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Decorative side */
-        .auth-decoration {
-            background: linear-gradient(135deg, #9e4223 0%, #C35E3D 50%, #D4845A 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 64px;
-            position: relative;
-            overflow: hidden;
-            border-right: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .auth-decoration::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cpath d='M0 80 Q40 40 80 80' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1'/%3E%3Cpath d='M0 60 Q40 20 80 60' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3C/svg%3E") repeat;
-            background-size: 80px 80px;
-        }
-
-        .auth-deco-content {
-            position: relative;
-            z-index: 1;
-            text-align: center;
-            color: #FAF9F6;
-        }
-
-        .auth-deco-icon {
-            font-size: 4rem;
-            margin-bottom: 32px;
-            color: #E4A853;
-        }
-
-        .auth-deco-title {
-            font-family: 'DM Serif Display', serif;
-            font-size: 3rem;
-            font-weight: 400;
-            line-height: 1.1;
-            margin-bottom: 24px;
-        }
-
-        .auth-deco-desc {
-            font-size: 0.95rem;
-            opacity: 0.85;
-            max-width: 400px;
-            line-height: 1.7;
-            margin: 0 auto 40px;
-        }
-
-        .auth-deco-features {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            text-align: left;
-        }
-
-        .auth-deco-feature {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px 20px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .auth-deco-feature i {
-            font-size: 1.4rem;
-            color: #E4A853;
-        }
-
-        /* Form side */
-        .auth-form-side {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 40px;
-            background: #fff8f3;
-            overflow-y: auto;
-            max-height: 100vh;
-        }
-
-        .auth-container {
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .auth-header {
-            text-align: left;
-            margin-bottom: 36px;
-        }
-
-        .auth-logo {
-            font-size: 3rem;
-            margin-bottom: 16px;
-            color: #163429;
-        }
-
-        .auth-title {
-            font-size: 2rem;
-            font-weight: 400;
-            font-family: 'DM Serif Display', serif;
-            line-height: 1.2;
-        }
-
-        .auth-title .title-main { color: #211b12; }
-        .auth-title .title-accent { color: #9e4223; }
-
-        .auth-subtitle {
-            font-size: 0.88rem;
-            color: var(--color-text-muted);
-            margin-top: 8px;
-        }
-
-        .auth-card {
-            padding: 0;
-        }
-
-        .auth-footer {
-            text-align: center;
-            margin-top: 28px;
-            font-size: 0.85rem;
-            color: var(--color-text-muted);
-        }
-
-        .auth-footer a {
-            font-weight: 600;
-            color: #9e4223;
-            text-decoration: none;
-        }
-
-        .auth-footer a:hover {
-            text-decoration: underline;
-        }
-
-        .password-wrapper {
-            position: relative;
-        }
-
-        .password-wrapper .form-input {
-            padding-right: 40px;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.1rem;
-            padding: 8px;
-            color: var(--color-text-muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .toggle-password:hover {
-            color: var(--color-text-primary);
-        }
-
-        .auth-divider {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin: 28px 0;
-            color: var(--color-text-dim);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .auth-divider::before,
-        .auth-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--color-border);
-        }
-
-        .form-label {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 600;
-            color: #414845;
-            font-size: 0.85rem;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        .form-input {
-            width: 100%;
-            background: #ffffff;
-            border: 1px solid #c1c8c3;
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 0.95rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #2D4B3F;
-            box-shadow: 0 0 0 3px rgba(45, 75, 63, 0.1);
-        }
-
-        .form-error-box {
-            background: rgba(191, 69, 69, 0.06);
-            border: 1px solid rgba(191, 69, 69, 0.2);
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            font-size: 0.85rem;
-            color: var(--color-danger);
-            display: none;
-        }
-
-        .btn-submit {
-            width: 100%;
-            background-color: #9e4223;
-            color: #ffffff;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 700;
-            padding: 16px;
-            border-radius: 8px;
-            border: none;
-            margin-top: 12px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(158, 66, 35, 0.2);
-        }
-
-        .btn-submit:hover {
-            background-color: #8a3a1f;
-            box-shadow: 0 6px 16px rgba(158, 66, 35, 0.3);
-            transform: translateY(-1px);
-        }
-
-        .btn-submit:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            width: 100%;
-            background-color: transparent;
-            color: #211b12;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 600;
-            padding: 14px;
-            border-radius: 8px;
-            border: 1px solid #c1c8c3;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn-secondary:hover {
-            background-color: #F4EDE1;
-            border-color: #2D4B3F;
-        }
-
-        @media (max-width: 768px) {
-            .auth-page { grid-template-columns: 1fr; }
-            .auth-decoration { display: none; }
-            .auth-form-side { padding: 32px 20px; }
+        .glass-panel {
+            background: rgba(250, 249, 246, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(74, 66, 56, 0.1);
         }
     </style>
 </head>
-<body>
-    <div class="auth-page">
-        <!-- Decorative Side -->
-        <div class="auth-decoration">
-            <div class="auth-deco-content">
-                <div class="auth-deco-icon"><i class="ph-fill ph-plant"></i></div>
-                <h2 class="auth-deco-title">Selamat Datang<br/>Kembali</h2>
-                <p class="auth-deco-desc">
-                    Kelola lahan pertanian Anda dan dapatkan wawasan presisi untuk hasil panen yang lebih baik.
+<body class="bg-background font-body-md text-slate-soil min-h-screen flex items-center justify-center relative overflow-hidden">
+    
+    <!-- Background Decor -->
+    <div class="absolute inset-0 z-0">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-sage-accent/20 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-sunset-gold/10 rounded-full blur-[120px]"></div>
+        <div class="w-full h-full bg-[url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 80 80\'%3E%3Cpath d=\'M0 80 Q40 40 80 80\' fill=\'none\' stroke=\'rgba(74,66,56,0.03)\' stroke-width=\'1\'/%3E%3C/svg%3E')] opacity-50"></div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="relative z-10 w-full max-w-5xl mx-auto flex flex-col md:flex-row shadow-2xl rounded-2xl overflow-hidden border border-slate-soil/10 bg-warm-parchment m-4 md:m-8 min-h-[600px]">
+        
+        <!-- Left Side: Branding & Imagery -->
+        <div class="w-full md:w-5/12 bg-deep-moss relative p-12 flex flex-col justify-between text-white overflow-hidden hidden md:flex">
+            <!-- Background Image overlay for texture -->
+            <div class="absolute inset-0 bg-[url('https://lh3.googleusercontent.com/aida-public/AB6AXuDRdM-NdlQ2xwSUMBwSFi62zMZk_Xd2328g8mvqOkJuM32Hh8ZWi1uv-8VkBV72a_xbhWURIuNT7BLwjDdsrqO_Mdata8n-UL9H8DZnqRtYqWysFSlPvhtFq3Q7nSf1jdC618ZuCfdrdJEO9TTwB87c9YXhg1RCv1XeqY2zDR0tqEp_Ex4pBMyvarl_gBYqf08BsmpNSwKUSc4fS2hE3qWmHRkfs_poAsjkBkjuqwXdPPaarNC2Gb4hSw')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+            
+            <div class="relative z-10">
+                <div class="text-sunset-gold mb-4"><i class="ph-fill ph-plant text-4xl"></i></div>
+                <h1 class="font-display-hero text-4xl mb-2 text-warm-parchment">TerraSense Agri</h1>
+                <p class="font-label-caps tracking-widest text-sage-accent text-xs">PRECISION FARMING</p>
+            </div>
+            
+            <div class="relative z-10 mt-auto">
+                <h2 class="font-headline-lg text-3xl mb-4 text-white">Selamat Datang Kembali</h2>
+                <p class="text-white/80 font-body-sm leading-relaxed max-w-sm">
+                    Kelola lahan pertanian Anda dan dapatkan wawasan presisi untuk hasil panen yang lebih baik. Platform monitoring agrikultur berbasis data untuk petani modern.
                 </p>
-                <div class="auth-deco-features">
-                    <div class="auth-deco-feature">
-                        <i class="ph-fill ph-map-trifold"></i>
-                        <span>Pemetaan lahan digital</span>
+                
+                <div class="mt-8 space-y-4">
+                    <div class="flex items-center gap-3 text-sm text-white/90 bg-white/10 p-3 rounded-lg backdrop-blur-sm border border-white/10">
+                        <i class="ph-fill ph-map-trifold text-sunset-gold"></i>
+                        <span>Pemetaan lahan digital presisi</span>
                     </div>
-                    <div class="auth-deco-feature">
-                        <i class="ph-fill ph-thermometer"></i>
-                        <span>Analisis cuaca real-time</span>
-                    </div>
-                    <div class="auth-deco-feature">
-                        <i class="ph-fill ph-plant"></i>
-                        <span>Rekomendasi tanaman presisi</span>
+                    <div class="flex items-center gap-3 text-sm text-white/90 bg-white/10 p-3 rounded-lg backdrop-blur-sm border border-white/10">
+                        <i class="ph-fill ph-thermometer text-sunset-gold"></i>
+                        <span>Analisis iklim & cuaca real-time</span>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Form Side -->
-        <div class="auth-form-side">
-            <div class="auth-container animate-fade-in">
-                <!-- Header -->
-                <div class="auth-header">
-                    <div class="auth-logo"><i class="ph-fill ph-plant"></i></div>
-                    <h1 class="auth-title">
-                        <span class="title-main">Terra</span><span class="title-accent">Sense</span>
-                    </h1>
-                    <p class="auth-subtitle">Masuk ke akun petani Anda</p>
+        
+        <!-- Right Side: Form -->
+        <div class="w-full md:w-7/12 bg-linen-light p-8 md:p-16 flex flex-col justify-center">
+            
+            <div class="mb-10 text-center md:text-left">
+                <div class="md:hidden text-deep-moss mb-4"><i class="ph-fill ph-plant text-4xl"></i></div>
+                <h2 class="font-headline-lg text-3xl text-deep-moss mb-2">Masuk ke Akun Anda</h2>
+                <p class="text-slate-soil/70 text-sm">Masukkan email dan kata sandi Anda untuk melanjutkan ke dasbor.</p>
+            </div>
+            
+            <!-- Error Box -->
+            <div id="login-error" class="hidden bg-error-container border border-error/20 text-on-error-container text-sm p-4 rounded-lg mb-6 flex items-start gap-3">
+                <span class="material-symbols-outlined text-error text-[20px]">error</span>
+                <span id="login-error-text">Email atau password salah.</span>
+            </div>
+            
+            <form id="login-form" class="space-y-6" autocomplete="on">
+                <div class="space-y-2">
+                    <label for="login-email" class="font-label-caps text-slate-soil/70 uppercase">Email</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-soil/40">mail</span>
+                        <input type="email" id="login-email" class="w-full bg-white border border-slate-soil/20 rounded-lg pl-12 pr-4 py-3.5 focus:ring-1 focus:ring-sage-accent focus:border-sage-accent outline-none transition-all font-body-sm" placeholder="petani@contoh.com" required autocomplete="email">
+                    </div>
                 </div>
-
-                <!-- Login Form -->
-                <div class="auth-card">
-                    <div class="form-error-box" id="login-error"></div>
-
-                    <form id="login-form" autocomplete="on">
-                        <div class="form-group">
-                            <label class="form-label" for="login-email">Email</label>
-                            <input type="email" id="login-email" class="form-input" placeholder="petani@example.com" required autocomplete="email">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="login-password">Password</label>
-                            <div class="password-wrapper">
-                                <input type="password" id="login-password" class="form-input" placeholder="Masukkan password" required autocomplete="current-password">
-                                <button type="button" class="toggle-password" tabindex="-1" data-target="login-password">
-                                    <i class="ph ph-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn-submit">
-                            Masuk ke Dashboard
+                
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label for="login-password" class="font-label-caps text-slate-soil/70 uppercase">Kata Sandi</label>
+                        <a href="#" class="text-xs font-button text-burnt-terracotta hover:underline">Lupa sandi?</a>
+                    </div>
+                    <div class="relative password-wrapper">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-soil/40">lock</span>
+                        <input type="password" id="login-password" class="w-full bg-white border border-slate-soil/20 rounded-lg pl-12 pr-12 py-3.5 focus:ring-1 focus:ring-sage-accent focus:border-sage-accent outline-none transition-all font-body-sm" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" class="toggle-password absolute right-4 top-1/2 -translate-y-1/2 text-slate-soil/40 hover:text-deep-moss transition-colors" data-target="login-password">
+                            <span class="material-symbols-outlined">visibility</span>
                         </button>
-                    </form>
-
-                    <div class="auth-divider">atau</div>
-
-                    <a href="/TerraSense-Agri/pages/register.html" class="btn-secondary">
-                        Buat Akun Petani Baru
-                    </a>
+                    </div>
                 </div>
-
-                <!-- Footer -->
-                <div class="auth-footer">
-                    <a href="/TerraSense-Agri/">← Kembali ke Beranda</a>
+                
+                <button type="submit" class="w-full bg-deep-moss text-white rounded-lg py-4 font-button shadow-lg shadow-deep-moss/20 hover:bg-primary transition-all hover:-translate-y-0.5 mt-2 flex items-center justify-center gap-2">
+                    Masuk ke Dasbor
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </button>
+            </form>
+            
+            <div class="mt-8 relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-slate-soil/10"></div>
+                </div>
+                <div class="relative flex justify-center text-xs">
+                    <span class="bg-linen-light px-4 font-label-caps text-slate-soil/50">ATAU</span>
                 </div>
             </div>
+            
+            <div class="mt-8 text-center">
+                <a href="/TerraSense-Agri/pages/register.html" class="w-full inline-block bg-white border border-slate-soil/20 text-deep-moss rounded-lg py-3.5 font-button hover:bg-warm-parchment/50 transition-colors shadow-sm">
+                    Buat Akun Petani Baru
+                </a>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <a href="/TerraSense-Agri/index.html" class="text-xs text-slate-soil/60 hover:text-burnt-terracotta transition-colors flex items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">home</span> Kembali ke Beranda
+                </a>
+            </div>
+            
         </div>
     </div>
 
