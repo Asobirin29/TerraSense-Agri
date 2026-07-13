@@ -1,1389 +1,433 @@
 <!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Peta Lahan — TerraSense Agri</title>
-    <meta name="description" content="Petakan lahan pertanian Anda, analisis kondisi lingkungan, dan dapatkan rekomendasi tanaman & pupuk presisi.">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
-    <link rel="stylesheet" href="/TerraSense-Agri/assets/css/style.css">
-    <style>
-        body { overflow: hidden; height: 100vh; }
-        body::before { display: none; }
 
-        #map { position: absolute; inset: 0; z-index: 0; }
-
-        /* Leaflet overrides — warm theme */
-        .leaflet-draw-toolbar { display: none !important; }
-        .leaflet-draw-actions { display: none !important; }
-        .leaflet-control-zoom a {
-            background: rgba(35, 29, 26, 0.92) !important;
-            color: var(--color-soil) !important;
-            border: 1px solid var(--color-border) !important;
-            backdrop-filter: blur(8px) !important;
-            font-family: 'Plus Jakarta Sans', sans-serif !important;
-            transition: all 0.2s ease !important;
-        }
-        .leaflet-control-zoom a:hover {
-            background: var(--color-parchment) !important;
-            border-color: var(--color-border-hover) !important;
-            color: var(--color-terracotta) !important;
-        }
-        .leaflet-control-zoom { border: none !important; box-shadow: none !important; }
-        .leaflet-control-attribution { display: none !important; }
-
-        /* Top bar */
-        .map-topbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 40;
-            height: 56px;
-            background: rgba(35, 29, 26, 0.92);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--color-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-        }
-
-        .map-topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .map-topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .back-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-sm);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--color-soil);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            font-size: 1rem;
-        }
-
-        .back-btn:hover {
-            background: var(--color-surface-hover);
-            border-color: var(--color-border-hover);
-            text-decoration: none;
-            color: var(--color-terracotta);
-        }
-
-        .map-title {
-            font-size: 0.95rem;
-            font-weight: 400;
-            font-family: 'DM Serif Display', serif;
-            color: var(--color-bark);
-        }
-
-        .map-subtitle {
-            font-size: 0.65rem;
-            color: var(--color-text-dim);
-        }
-
-        /* Control panel */
-        .map-controls {
-            position: fixed;
-            top: 72px;
-            right: 16px;
-            z-index: 30;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .map-control-btn {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid var(--color-border);
-            background: rgba(35, 29, 26, 0.92);
-            backdrop-filter: blur(12px);
-            font-size: 1.2rem;
-            box-shadow: var(--shadow-panel);
-        }
-
-        .map-control-btn:hover {
-            border-color: var(--color-border-hover);
-            background: var(--color-parchment);
-            transform: scale(1.05);
-        }
-
-        .map-control-btn.active {
-            border-color: var(--color-terracotta);
-            box-shadow: var(--shadow-warm);
-            background: rgba(198, 123, 92, 0.08);
-        }
-
-        @keyframes ctaPulse {
-            0%, 100% { box-shadow: var(--shadow-panel), 0 0 0 0 rgba(198, 123, 92, 0.3); }
-            50% { box-shadow: var(--shadow-panel), 0 0 0 8px rgba(198, 123, 92, 0); }
-        }
-        .cta-pulse { animation: ctaPulse 2s ease-in-out infinite; }
-
-        /* Tooltip */
-        .map-tooltip {
-            position: fixed;
-            top: 72px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 35;
-            padding: 10px 20px;
-            max-width: 90vw;
-        }
-
-        .map-tooltip p {
-            font-size: 0.8rem;
-            color: var(--color-soil);
-            text-align: center;
-            font-weight: 500;
-        }
-
-        /* Loading overlay */
-        .map-loading {
-            position: fixed;
-            inset: 0;
-            z-index: 50;
-            background: rgba(61, 43, 31, 0.35);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .map-loading-inner {
-            padding: 32px;
-            width: 280px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .map-loading-spinner {
-            position: relative;
-            width: 64px;
-            height: 64px;
-        }
-
-        .map-loading-spinner svg {
-            width: 64px;
-            height: 64px;
-            animation: spin 1s linear infinite;
-        }
-
-        .map-loading-spinner .center-icon {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: var(--color-terracotta);
-        }
-
-        .load-step {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .load-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .load-dot.pending { background: var(--color-text-dim); }
-        .load-dot.active { background: var(--color-terracotta); animation: pulse 1s ease-in-out infinite; }
-        .load-dot.done { background: var(--color-sage); }
-
-        .load-text {
-            font-size: 0.7rem;
-        }
-        .load-text.pending { color: var(--color-text-dim); }
-        .load-text.active { color: var(--color-text-secondary); }
-        .load-text.done { color: var(--color-sage); }
-
-        /* Scan line */
-        @keyframes scanLine {
-            0% { top: -2px; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        .scan-line {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 2px;
-            z-index: 5;
-            background: linear-gradient(90deg, transparent, rgba(198, 123, 92, 0.4), rgba(198, 123, 92, 0.7), rgba(198, 123, 92, 0.4), transparent);
-            pointer-events: none;
-        }
-
-        /* Data Panel */
-        .data-panel {
-            position: fixed;
-            bottom: 16px;
-            left: 16px;
-            z-index: 30;
-            width: 380px;
-            max-height: 80vh;
-            overflow-y: auto;
-            padding: 20px;
-            background: var(--color-base-card);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-elevated);
-        }
-
-        .data-panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .data-panel-header h2 {
-            font-size: 1.05rem;
-            font-weight: 400;
-            font-family: 'DM Serif Display', serif;
-            color: var(--color-bark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .close-panel-btn {
-            color: var(--color-text-muted);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 6px;
-            border-radius: var(--radius-sm);
-            transition: all 0.2s ease;
-        }
-
-        .close-panel-btn:hover {
-            color: var(--color-soil);
-            background: var(--color-linen);
-        }
-
-        .env-grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .env-grid-3 {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-        }
-
-        .env-card {
-            background: var(--color-linen);
-            border-radius: var(--radius-md);
-            padding: 12px;
-            border: 1px solid var(--color-border);
-            transition: border-color 0.2s ease;
-        }
-
-        .env-card:hover { border-color: var(--color-border-hover); }
-
-        .env-label {
-            font-size: 0.55rem;
-            color: var(--color-text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 600;
-        }
-
-        .env-value {
-            font-size: 1.5rem;
-            font-weight: 800;
-            font-family: 'DM Serif Display', serif;
-            margin-top: 4px;
-        }
-
-        .env-unit {
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-left: 2px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .section-divider {
-            height: 1px;
-            margin: 16px 0;
-            background: var(--color-border);
-        }
-
-        .section-title {
-            color: var(--color-soil);
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .section-title i {
-            color: var(--color-terracotta);
-        }
-
-        .zone-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .zone-highland {
-            background: #EDE9F6;
-            border: 1px solid #D4CBE8;
-            color: #6B4FA0;
-        }
-        .zone-midland {
-            background: #E8F0E5;
-            border: 1px solid #C9DBC3;
-            color: #5B7553;
-        }
-        .zone-lowland {
-            background: #FBF0E4;
-            border: 1px solid #EDD8C0;
-            color: #A0522D;
-        }
-
-        .plant-card {
-            background: var(--color-linen);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s ease;
-            border-left: 3px solid var(--color-sage);
-        }
-
-        .plant-card:hover {
-            background: var(--color-surface-hover);
-            border-color: var(--color-border-hover);
-            transform: translateX(4px);
-        }
-
-        .plant-card + .plant-card { margin-top: 8px; }
-
-        .plant-icon {
-            font-size: 1.4rem;
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(124, 148, 115, 0.1);
-            border-radius: var(--radius-md);
-            border: 1px solid rgba(124, 148, 115, 0.15);
-            color: var(--color-sage);
-        }
-
-        .dose-card {
-            background: var(--color-linen);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            padding: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .dose-card:hover { border-color: var(--color-border-hover); background: var(--color-surface-hover); }
-        .dose-card + .dose-card { margin-top: 8px; }
-
-        .progress-bar-fill {
-            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .warning-box {
-            background: rgba(212, 132, 90, 0.06);
-            border: 1px solid rgba(212, 132, 90, 0.2);
-            border-radius: var(--radius-md);
-            padding: 12px 14px;
-            margin-top: 8px;
-        }
-        .warning-box p, .warning-box li { color: var(--color-text-secondary); font-size: 0.75rem; margin: 0 0 6px 0; line-height: 1.6; }
-        .warning-box p:last-child, .warning-box li:last-child { margin-bottom: 0; }
-
-        .info-box {
-            background: rgba(124, 148, 115, 0.06);
-            border: 1px solid rgba(124, 148, 115, 0.2);
-            border-radius: var(--radius-md);
-            padding: 12px 14px;
-            margin-top: 8px;
-        }
-        .info-box p { color: var(--color-text-secondary); font-size: 0.75rem; margin: 0; line-height: 1.6; }
-
-        .error-message {
-            color: var(--color-danger);
-            background: rgba(191, 69, 69, 0.06);
-            border: 1px solid rgba(191, 69, 69, 0.2);
-            border-radius: var(--radius-md);
-            padding: 14px;
-            font-size: 0.85rem;
-            line-height: 1.5;
-        }
-
-        .disclaimer-text {
-            color: var(--color-text-dim);
-            font-size: 0.62rem;
-            line-height: 1.5;
-            font-style: italic;
-            margin-top: 8px;
-        }
-
-        /* Save Farm Modal */
-        .save-modal-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 60;
-            background: rgba(61, 43, 31, 0.4);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .save-modal-overlay.active { display: flex; }
-
-        .save-modal {
-            width: 100%;
-            max-width: 420px;
-            padding: 28px;
-            animation: scaleIn 0.3s ease forwards;
-        }
-
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        /* FAB */
-        .fab {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 25;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(35, 29, 26, 0.92);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--color-border);
-            box-shadow: var(--shadow-elevated);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
-            color: var(--color-soil);
-        }
-
-        .fab:hover {
-            border-color: var(--color-border-hover);
-            box-shadow: var(--shadow-elevated), var(--shadow-warm);
-            transform: scale(1.08);
-        }
-
-        /* Responsive */
-        @media (max-width: 640px) {
-            .data-panel {
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
-                width: 100% !important;
-                max-height: 72vh !important;
-                border-radius: 20px 20px 0 0 !important;
-                padding: 20px 16px !important;
+<html class="light" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Peta Lahan | TerraSense Agri</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "background": "#fff8f3",
+                    "on-secondary-container": "#742407",
+                    "surface-container-low": "#fff1e3",
+                    "error": "#ba1a1a",
+                    "primary-container": "#2d4b3f",
+                    "on-tertiary-fixed": "#1e1b14",
+                    "on-secondary-fixed-variant": "#7e2b0e",
+                    "on-error": "#ffffff",
+                    "sunset-gold": "#E4A853",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#fe8c67",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#ccc6ba",
+                    "primary-fixed": "#c8eada",
+                    "on-primary-fixed": "#012016",
+                    "on-surface-variant": "#414845",
+                    "on-background": "#211b12",
+                    "surface-variant": "#eee0d2",
+                    "inverse-on-surface": "#fcefe0",
+                    "on-tertiary": "#ffffff",
+                    "deep-moss": "#2D4B3F",
+                    "surface-tint": "#466558",
+                    "surface-bright": "#fff8f3",
+                    "on-secondary-fixed": "#3a0b00",
+                    "inverse-primary": "#adcebe",
+                    "secondary": "#9e4223",
+                    "linen-light": "#FAF9F6",
+                    "primary": "#163429",
+                    "outline-variant": "#c1c8c3",
+                    "surface-container": "#f9ecde",
+                    "on-tertiary-container": "#b8b2a7",
+                    "burnt-terracotta": "#C35E3D",
+                    "error-container": "#ffdad6",
+                    "inverse-surface": "#362f26",
+                    "secondary-fixed-dim": "#ffb59e",
+                    "on-primary-fixed-variant": "#2f4d41",
+                    "sage-accent": "#8A9A5B",
+                    "secondary-fixed": "#ffdbd0",
+                    "primary-fixed-dim": "#adcebe",
+                    "warm-parchment": "#F4EDE1",
+                    "on-tertiary-fixed-variant": "#4a463e",
+                    "slate-soil": "#4A4238",
+                    "tertiary": "#322f27",
+                    "on-primary-container": "#99baab",
+                    "surface-container-high": "#f3e6d8",
+                    "surface-container-highest": "#eee0d2",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#e8e2d6",
+                    "surface-dim": "#e5d8ca",
+                    "outline": "#727974",
+                    "tertiary-container": "#48453c",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#211b12",
+                    "surface": "#fff8f3"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "gutter": "16px",
+                    "sm": "8px",
+                    "unit": "4px",
+                    "xl": "32px",
+                    "margin-desktop": "40px"
+            },
+            "fontFamily": {
+                    "button": ["Plus Jakarta Sans"],
+                    "body-sm": ["Plus Jakarta Sans"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "headline-lg": ["DM Serif Display"],
+                    "headline-lg-mobile": ["DM Serif Display"],
+                    "display-hero": ["DM Serif Display"],
+                    "label-caps": ["Plus Jakarta Sans"],
+                    "stat-value": ["DM Serif Display"]
+            },
+            "fontSize": {
+                    "button": ["14px", {"lineHeight": "1", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "400"}],
+                    "display-hero": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                    "stat-value": ["28px", {"lineHeight": "1.1", "fontWeight": "400"}]
             }
-            .map-controls { top: 68px; right: 12px; }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(250, 249, 246, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(74, 66, 56, 0.1);
         }
-
-        @media (min-width: 641px) and (max-width: 1024px) {
-            .data-panel { width: 360px !important; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
         }
-
-        @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
+        .active-tab {
+            background: #8A9A5B;
+            color: #163429;
+            border-radius: 0.5rem;
         }
-        .animate-panel-in { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #4A423844; border-radius: 10px; }
     </style>
-</head>
-<body>
-    <!-- Map -->
-    <div id="map"></div>
 
-    <!-- Top Bar -->
-    <div class="map-topbar">
-        <div class="map-topbar-left">
-            <a href="/TerraSense-Agri/pages/dashboard.html" class="back-btn" title="Kembali ke Dashboard"><i class="ph ph-arrow-left"></i></a>
-            <div>
-                <div class="map-title" id="map-title"><i class="ph-fill ph-plant" style="color: var(--color-sage);"></i> Peta Lahan</div>
-                <div class="map-subtitle" id="map-subtitle">Gambar batas lahan untuk memulai analisis</div>
-            </div>
-        </div>
-        <div class="map-topbar-right">
-            <button class="btn btn-secondary btn-sm hidden" id="save-farm-btn"><i class="ph ph-floppy-disk"></i> Simpan Lahan</button>
-        </div>
-    </div>
-
-    <!-- Map Controls -->
-    <div class="map-controls">
-        <button class="map-control-btn" id="locate-btn" title="Lokasi Saya">
-            <i class="ph ph-crosshair" style="color: var(--color-sage);"></i>
-        </button>
-        <button class="map-control-btn cta-pulse" id="draw-btn" title="Gambar Batas Lahan">
-            <i class="ph ph-polygon" style="color: var(--color-terracotta);"></i>
-        </button>
-        <button class="map-control-btn hidden" id="reset-btn" title="Hapus & Gambar Ulang">
-            <i class="ph ph-trash" style="color: var(--color-danger);"></i>
-        </button>
-    </div>
-
-    <!-- Draw Tooltip -->
-    <div class="map-tooltip glass-panel hidden" id="draw-tooltip">
-        <p><i class="ph ph-hand-pointing"></i> Ketuk titik demi titik untuk membuat batas lahan. Ketuk titik pertama untuk menutup poligon.</p>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div class="map-loading hidden" id="loading-overlay">
-        <div class="glass-panel map-loading-inner">
-            <div class="map-loading-spinner">
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-terracotta)">
-                    <circle cx="12" cy="12" r="10" stroke-width="1.5" opacity="0.15"/>
-                    <path d="M12 2 A10 10 0 0 1 22 12" stroke-width="2.5" stroke-linecap="round"/>
-                </svg>
-                <div class="center-icon"><i class="ph-fill ph-satellite"></i></div>
-            </div>
-            <div style="text-align:center;">
-                <p style="color: var(--color-soil); font-weight: 600; font-size: 0.9rem; font-family: 'DM Serif Display', serif;">Menganalisis Topografi</p>
-                <p style="color: var(--color-text-dim); font-size: 0.75rem; margin-top: 6px;">Mengambil data elevasi & cuaca real-time</p>
-            </div>
-            <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-                <div class="load-step" id="load-step-1">
-                    <div class="load-dot active"></div>
-                    <span class="load-text active">Menghitung geometri lahan...</span>
-                </div>
-                <div class="load-step" id="load-step-2">
-                    <div class="load-dot pending"></div>
-                    <span class="load-text pending">Mengambil data ketinggian...</span>
-                </div>
-                <div class="load-step" id="load-step-3">
-                    <div class="load-dot pending"></div>
-                    <span class="load-text pending">Mengambil data cuaca terkini...</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scan Line -->
-    <div class="scan-line hidden" id="scan-line"></div>
-
-    <!-- FAB: Reopen Panel -->
-    <button class="fab hidden" id="fab-reopen" title="Tampilkan Hasil Analisis"><i class="ph ph-chart-bar"></i></button>
-
-    <!-- Data Panel -->
-    <div class="data-panel hidden" id="data-panel">
-        <div class="data-panel-header">
-            <h2><span style="color: var(--color-terracotta);"><i class="ph-fill ph-chart-bar"></i></span> Analisis Lahan</h2>
-            <button class="close-panel-btn" id="close-panel-btn" title="Tutup Panel">
-                <i class="ph ph-x"></i>
+    <!-- Leaflet & Draw -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    </head>
+<body class="bg-background font-body-md text-on-background overflow-hidden">
+<!-- Main Sidebar Shell (Immutable Logic) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-deep-moss text-on-primary shadow-md flex flex-col py-6 z-[60] border-r border-slate-soil/10">
+<div class="px-6 mb-8">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-sunset-gold">TerraSense Agri</h1>
+<p class="text-[10px] uppercase tracking-widest opacity-60">Pertanian Presisi</p>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="flex items-center text-on-primary/70 hover:text-on-primary px-4 py-2 hover:bg-primary-container/20 transition-colors duration-150 scale-95" href="/TerraSense-Agri/pages/dashboard.html">
+<span class="material-symbols-outlined mr-3">eco</span>
+<span class="font-body-md">Beranda</span>
+</a>
+<!-- Active Tab: Farm Map (Peta Lahan) -->
+<a class="flex items-center bg-sage-accent text-primary rounded-lg mx-2 px-4 py-2 transition-colors duration-150 scale-95" href="/TerraSense-Agri/pages/farm-map.html">
+<span class="material-symbols-outlined mr-3">map</span>
+<span class="font-body-md font-semibold">Peta Lahan</span>
+</a>
+<a class="flex items-center text-on-primary/70 hover:text-on-primary px-4 py-2 hover:bg-primary-container/20 transition-colors duration-150 scale-95" href="#">
+<span class="material-symbols-outlined mr-3">layers</span>
+<span class="font-body-md">Analisis Tanah</span>
+</a>
+<a class="flex items-center text-on-primary/70 hover:text-on-primary px-4 py-2 hover:bg-primary-container/20 transition-colors duration-150 scale-95" href="#">
+<span class="material-symbols-outlined mr-3">temp_preferences_custom</span>
+<span class="font-body-md">Stasiun Cuaca</span>
+</a>
+<a class="flex items-center text-on-primary/70 hover:text-on-primary px-4 py-2 hover:bg-primary-container/20 transition-colors duration-150 scale-95" href="#">
+<span class="material-symbols-outlined mr-3">assessment</span>
+<span class="font-body-md">Laporan Panen</span>
+</a>
+</nav>
+<div class="mt-auto px-2 border-t border-white/10 pt-4 space-y-1">
+<button class="w-full mb-4 bg-sunset-gold text-primary font-button text-button py-3 rounded-lg mx-auto flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+                Analisis Baru
             </button>
-        </div>
+<a class="flex items-center text-on-primary/70 hover:text-on-primary px-4 py-2 hover:bg-primary-container/20 transition-colors duration-150 scale-95" href="#">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="font-body-md">Pengaturan</span>
+</a>
+<a class="flex items-center text-on-primary/70 hover:text-on-primary px-4 py-2 hover:bg-primary-container/20 transition-colors duration-150 scale-95" href="#">
+<span class="material-symbols-outlined mr-3">help</span>
+<span class="font-body-md">Bantuan</span>
+</a>
+</div>
+</aside>
+<!-- Content Area -->
+<main class="ml-64 relative h-screen w-[calc(100%-16rem)]">
+<!-- Top Nav Bar Shell (Immutable Logic) -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-50 bg-warm-parchment/80 backdrop-blur-md flex justify-between items-center px-10 py-4 border-b border-slate-soil/10">
+<div class="flex items-center gap-6">
+<div class="relative group">
+<button class="flex items-center gap-2 text-primary font-label-caps text-label-caps border-b-2 border-burnt-terracotta py-1">
+                        Farm Quick-Selector
+                        <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-deep-moss">Peta Lahan</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-burnt-terracotta transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-slate-soil/20">
+<div class="text-right">
+<p class="text-label-caps text-[10px] leading-tight">Admin Lahan</p>
+<p class="font-button text-button text-deep-moss">Pak Budi</p>
+</div>
+<span onclick="window.location.href='/TerraSense-Agri/pages/profile.html'" style="cursor:pointer;" class="material-symbols-outlined text-4xl text-on-surface-variant hover:text-sage-accent transition-colors">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Full Screen Satellite Map Container -->
+<section class="absolute inset-0 z-0">
+<div id="map" class="w-full h-full absolute inset-0 z-0"></div>
+<!-- Map Overlay UI Controls -->
+<div class="absolute bottom-10 right-10 flex flex-col gap-3">
+<button id="draw-btn" class="w-12 h-12 glass-panel flex items-center justify-center rounded-lg shadow-lg hover:bg-white transition-all text-deep-moss" title="Gambar Lahan">
+<span class="material-symbols-outlined">polyline</span>
+</button>
+<button id="reset-btn" class="hidden w-12 h-12 glass-panel items-center justify-center rounded-lg shadow-lg hover:bg-white transition-all text-error mt-2" title="Hapus Lahan">
+<span class="material-symbols-outlined">delete</span>
+</button>
+<button id="locate-btn" class="w-12 h-12 glass-panel flex items-center justify-center rounded-lg shadow-lg hover:bg-white transition-all text-deep-moss mt-2" title="Lokasi Saya">
+<span class="material-symbols-outlined">my_location</span>
+</button>
+</div>
+</section>
+<!-- Floating Data Panels -->
+<div id="data-panel" class="hidden absolute top-24 left-10 w-96 flex flex-col gap-6 z-10 max-h-[80vh] overflow-y-auto custom-scrollbar pr-2">
+<!-- Analisis Lahan Panel -->
+<div class="glass-panel rounded-xl shadow-xl overflow-hidden border-t-4 border-sage-accent animate-fade-in-up">
+<div class="p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-lg text-2xl text-deep-moss">Analisis Lahan</h3>
+<span class="bg-sage-accent/20 text-deep-moss text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wider">Optimal</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="p-4 bg-white/40 rounded-lg border border-slate-soil/10">
+<p class="text-label-caps text-[10px] opacity-70 mb-1">Luas Area</p>
+<p class="font-stat-value text-stat-value text-deep-moss" id="res-area">- <span class="text-sm font-body-md opacity-60">Ha</span></p>
+</div>
+<div class="p-4 bg-white/40 rounded-lg border border-slate-soil/10">
+<p class="text-label-caps text-[10px] opacity-70 mb-1">Elevasi</p>
+<p class="font-stat-value text-stat-value text-deep-moss" id="res-elevation">- <span class="text-sm font-body-md opacity-60">MDPL</span></p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-sage-accent">thermostat</span>
+<span class="text-body-sm font-medium">Suhu</span>
+</div>
+<span class="font-button text-deep-moss" id="res-temp">-</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-sage-accent">humidity_mid</span>
+<span class="text-body-sm font-medium">Kelembapan</span>
+</div>
+<span class="font-button text-deep-moss" id="res-humidity">-</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-sage-accent">rainy</span>
+<span class="text-body-sm font-medium">Curah Hujan</span>
+</div>
+<span class="font-button text-deep-moss" id="res-precip">-</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Fertilizer Calculator Panel -->
+<div class="glass-panel rounded-xl shadow-xl border-l-4 border-burnt-terracotta">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-burnt-terracotta" style="font-variation-settings: 'FILL' 1;">science</span>
+<h4 class="font-button text-deep-moss uppercase tracking-widest text-xs">Kalkulator Pupuk</h4>
+</div>
+<div class="space-y-4">
+<div id="dosage-list" class="mb-4"></div>
+<div>
+<label class="text-[10px] font-bold uppercase tracking-wider text-slate-soil/60 block mb-2">Target Komoditas</label>
+<select class="w-full bg-white/50 border border-slate-soil/20 rounded-md py-2 px-3 text-body-sm focus:ring-1 focus:ring-sage-accent focus:outline-none appearance-none">
+<option>Kopi Arabika</option>
+<option>Teh Hijau</option>
+<option>Kubis Ungu</option>
+</select>
+</div>
+<div class="flex gap-4">
+<div class="flex-1">
+<label class="text-[10px] font-bold uppercase tracking-wider text-slate-soil/60 block mb-2">NPK (kg/Ha)</label>
+<input class="w-full bg-white/50 border border-slate-soil/20 rounded-md py-2 px-3 text-body-sm" type="number" value="150"/>
+</div>
+<div class="flex-1">
+<label class="text-[10px] font-bold uppercase tracking-wider text-slate-soil/60 block mb-2">Urea (kg/Ha)</label>
+<input class="w-full bg-white/50 border border-slate-soil/20 rounded-md py-2 px-3 text-body-sm" type="number" value="75"/>
+</div>
+</div>
+<button class="w-full bg-deep-moss text-on-primary py-3 rounded-lg font-button text-button hover:bg-primary-container transition-all flex items-center justify-center gap-2">
+                            Hitung Rekomendasi
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Side: Botanical Recommendations (Bento Grid Style) -->
+<div class="absolute top-24 right-10 w-80 z-10 space-y-6">
+<div class="glass-panel rounded-xl shadow-xl overflow-hidden">
+<div class="p-6 border-b border-slate-soil/10">
+<h3 class="font-button text-deep-moss text-sm uppercase tracking-widest">Rekomendasi Tanaman</h3>
+</div>
+<div id="recommendation-list" class="p-4 space-y-4">
+<!-- Plant Card 1 -->
+<div class="flex items-center gap-4 group cursor-pointer hover:bg-white/40 p-2 rounded-lg transition-all">
+<div class="w-16 h-16 rounded-lg overflow-hidden bg-linen-light border border-slate-soil/10">
+<img class="w-full h-full object-cover" data-alt="A highly detailed botanical illustration of a Coffee Arabica branch with ripe red berries and lush dark green leaves. The style is vintage heritage illustration with a modern scientific twist, isolated on a warm cream parchment background. Soft, natural lighting highlights the texture of the leaves." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYQV3ELm_pd94IpHno6vCcrGOLqUI83gW031BFTKGccgWQKWw8MKQSDpxg0_hcrThvJ6JOjr4rToEkD6sdu1WNZSD5eYcdlY5v40SLmCyNtJmKl4dTS0T13yTGjWxwV9gndZ2IODuon-tbu7C9EH3h4IQ9eTh6rL9thTvdEjMC2_Y2EJ6QYiLCNo8UO8XRjHMNe6zbng7rYb8CVOYf5qO6N-qipSLXxCnUAy9dD4cCRcHaAm1yakPIwA"/>
+</div>
+<div>
+<p class="font-button text-deep-moss">Kopi Arabika</p>
+<p class="text-xs text-sage-accent font-semibold">Tingkat Cocok: 98%</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-slate-soil/30 group-hover:text-burnt-terracotta">arrow_forward_ios</span>
+</div>
+<!-- Plant Card 2 -->
+<div class="flex items-center gap-4 group cursor-pointer hover:bg-white/40 p-2 rounded-lg transition-all">
+<div class="w-16 h-16 rounded-lg overflow-hidden bg-linen-light border border-slate-soil/10">
+<img class="w-full h-full object-cover" data-alt="A detailed scientific botanical drawing of a tea plant, Camellia sinensis, showing fresh light green tea buds and mature leaves. The style is modern heritage with precise linework on a soft eggshell background, evoking a sense of organic luxury and agricultural precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuALjRyhpa_LMLXH9zZTF73ik3rzRQigwJcH6Bfz-rqpcwfQ2BNe8CWM_sxWyCOwlALRpXslow_DOSXn56bbEjB08FRi9h9ZVq0GCqaHaHzx5u0VGecfB02j17kg2O6aZ42AiLG9-1ThL32j76DWv0RP2xQP5vUD0VVqepHOBHhKrrwxxaFcq1kJQlbfZvL3Ybc8JnAq6nZvZ1_-4lSvWxXYI6MmPxTZ23foWQC3QNDDeoBfQxOiXEgQ"/>
+</div>
+<div>
+<p class="font-button text-deep-moss">Teh Hijau</p>
+<p class="text-xs text-sage-accent font-semibold">Tingkat Cocok: 85%</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-slate-soil/30 group-hover:text-burnt-terracotta">arrow_forward_ios</span>
+</div>
+<!-- Plant Card 3 -->
+<div class="flex items-center gap-4 group cursor-pointer hover:bg-white/40 p-2 rounded-lg transition-all">
+<div class="w-16 h-16 rounded-lg overflow-hidden bg-linen-light border border-slate-soil/10">
+<img class="w-full h-full object-cover" data-alt="A beautiful botanical sketch of a purple cabbage with deep violet leaves and crystalline dew drops. The illustration is scientific yet artistic, featuring high contrast and earthy tones on a warm parchment texture. The mood is calm and grounded in traditional farming wisdom." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQupXXkGAQWl9Pdubw-X_TM96OFXKw3y_tGK9MdFoEMNOrvE6x43gy5qqz1aO00rHIOKwhw1QoZguiDzceyCGMmEkKQOpxr1WsxwqYY726NkSKa8wu_8poIiZpYMzU61rlzedC9YU3vCTrJTzHpOopgIqHtWVNkUQLVp4XyyZaAhfE7qhkIJmPiB-RPB-dg7T6t6zwfA9LK7vkIO4t7U1cs6LE49JXsJrsPhTi-HWUERpl6ik9-O_jYQ"/>
+</div>
+<div>
+<p class="font-button text-deep-moss">Kubis Ungu</p>
+<p class="text-xs text-sunset-gold font-semibold">Tingkat Cocok: 72%</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-slate-soil/30 group-hover:text-burnt-terracotta">arrow_forward_ios</span>
+</div>
+</div>
+<div class="bg-linen-light/50 p-4 border-t border-slate-soil/10">
+<p class="text-[10px] text-center text-on-surface-variant italic">Berdasarkan data tanah terakhir: 12 Jan 2024</p>
+</div>
+</div>
+<!-- Legend / Quick Map Actions -->
+<div class="glass-panel p-4 rounded-xl shadow-xl">
+<p class="text-[10px] font-bold uppercase tracking-widest text-slate-soil/50 mb-3">Legenda Peta</p>
+<div class="space-y-2">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-sage-accent"></div>
+<span class="text-xs font-medium">Vegetasi Padat</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-sunset-gold"></div>
+<span class="text-xs font-medium">Siap Panen</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-burnt-terracotta"></div>
+<span class="text-xs font-medium">Irigasi Kurang</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple Micro-interactions
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.style.transform = 'scale(0.95)';
+            });
+            el.addEventListener('mouseup', () => {
+                el.style.transform = 'scale(1)';
+            });
+            el.addEventListener('mouseleave', () => {
+                el.style.transform = 'scale(1)';
+            });
+        });
 
-        <!-- Environment Data -->
-        <div style="margin-bottom: 16px;">
-            <div class="env-grid-2" style="margin-bottom: 8px;">
-                <div class="env-card">
-                    <div class="env-label">Luas Lahan</div>
-                    <div class="env-value" style="color: var(--color-sage);">
-                        <span id="data-area">-</span><span class="env-unit" style="color: var(--color-sage); opacity: 0.6;">Ha</span>
-                    </div>
+        // Simulating some dynamic data updates
+        setInterval(() => {
+            const temp = (24 + Math.random()).toFixed(1);
+            const humidity = Math.floor(70 + Math.random() * 5);
+            document.querySelectorAll('.font-button.text-deep-moss')[0].innerText = temp + '°C';
+            document.querySelectorAll('.font-button.text-deep-moss')[1].innerText = humidity + '%';
+        }, 5000);
+    </script>
+
+    <div id="save-modal" class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center backdrop-blur-sm">
+        <div class="bg-warm-parchment rounded-xl w-[90%] max-w-md p-6 border border-slate-soil/20 shadow-2xl">
+            <h3 class="font-headline-lg text-2xl text-deep-moss mb-4">Simpan Lahan</h3>
+            <form id="save-form">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-soil/70 mb-2">Nama Lahan</label>
+                    <input type="text" id="farm-name" class="w-full bg-white/50 border border-slate-soil/30 rounded p-2 focus:ring-1 focus:ring-sage-accent" required placeholder="Cth: Lahan Jagung Utara">
                 </div>
-                <div class="env-card">
-                    <div class="env-label">Ketinggian</div>
-                    <div class="env-value" style="color: var(--color-sunset);">
-                        <span id="data-elevation">-</span><span class="env-unit" style="color: var(--color-sunset); opacity: 0.6;">MDPL</span>
-                    </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-soil/70 mb-2">Catatan Khusus (Opsional)</label>
+                    <textarea id="farm-notes" class="w-full bg-white/50 border border-slate-soil/30 rounded p-2 focus:ring-1 focus:ring-sage-accent" rows="3" placeholder="Catatan kondisi lahan..."></textarea>
                 </div>
-            </div>
-            <div class="env-grid-3">
-                <div class="env-card" style="text-align:center;">
-                    <div class="env-label"><i class="ph-fill ph-thermometer"></i> Suhu</div>
-                    <div style="font-size:0.9rem; font-weight:700; color:var(--color-soil); margin-top:6px;"><span id="data-temperature">-</span>°C</div>
-                </div>
-                <div class="env-card" style="text-align:center;">
-                    <div class="env-label"><i class="ph-fill ph-drop"></i> Lembap</div>
-                    <div style="font-size:0.9rem; font-weight:700; color:var(--color-soil); margin-top:6px;"><span id="data-humidity">-</span>%</div>
-                </div>
-                <div class="env-card" style="text-align:center;">
-                    <div class="env-label"><i class="ph-fill ph-cloud-rain"></i> Hujan</div>
-                    <div style="font-size:0.9rem; font-weight:700; color:var(--color-soil); margin-top:6px;"><span id="data-precipitation">-</span>mm</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section-divider"></div>
-
-        <!-- Zone -->
-        <div style="margin-bottom: 16px;">
-            <div class="section-title"><i class="ph-fill ph-map-pin"></i> Zona Terdeteksi</div>
-            <div id="zone-badge"><span class="zone-badge zone-midland" style="opacity:0.4;">Memproses...</span></div>
-            <p id="zone-description" style="font-size: 0.72rem; color: var(--color-text-secondary); margin-top: 10px; line-height: 1.6;"></p>
-        </div>
-
-        <div class="section-divider"></div>
-
-        <!-- Plants -->
-        <div style="margin-bottom: 16px;">
-            <div class="section-title"><i class="ph-fill ph-plant"></i> Tanaman Rekomendasi</div>
-            <div id="plants-container"></div>
-        </div>
-
-        <div class="section-divider"></div>
-
-        <div style="margin-bottom: 16px;">
-            <div class="section-title"><i class="ph-fill ph-flask"></i> Strategi Pemupukan</div>
-            <div id="fertilizer-container"></div>
-        </div>
-
-        <div class="section-divider"></div>
-
-        <!-- Dosage Calculator -->
-        <div style="margin-bottom: 16px;">
-            <div class="section-title"><i class="ph-fill ph-scales"></i> Kalkulator Dosis Pupuk</div>
-            <p style="font-size: 0.72rem; color: var(--color-text-dim); margin-bottom: 12px;">
-                Dosis otomatis dihitung berdasarkan luas lahan <strong style="color: var(--color-terracotta);" id="calc-area-label">-</strong> Ha
-            </p>
-            <div id="dosage-container"></div>
-            <p class="disclaimer-text" style="margin-top: 12px;">* Angka di atas adalah estimasi umum agronomi Indonesia. Konsultasikan dengan penyuluh pertanian setempat.</p>
-        </div>
-
-        <div class="section-divider"></div>
-
-        <!-- Notes -->
-        <div id="notes-container" style="margin-bottom: 12px;"></div>
-
-        <!-- Error -->
-        <div id="error-container" class="hidden"></div>
-
-        <!-- Timestamp -->
-        <div style="margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--color-border);">
-            <p style="font-size: 0.6rem; color: var(--color-text-dim); text-align: center;" id="analysis-timestamp">-</p>
-        </div>
-    </div>
-
-    <!-- Save Farm Modal -->
-    <div class="save-modal-overlay" id="save-modal">
-        <div class="glass-panel save-modal" id="save-modal-inner">
-            <h3 style="font-size: 1.2rem; font-weight: 400; font-family: 'DM Serif Display', serif; color: var(--color-bark); margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
-                <i class="ph ph-floppy-disk" style="color: var(--color-terracotta);"></i> Simpan Lahan
-            </h3>
-            <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 20px;">
-                Simpan lahan ini ke akun Anda untuk dilihat kembali nanti.
-            </p>
-            <form id="save-farm-form">
-                <div class="form-group">
-                    <label class="form-label" for="farm-name">Nama Lahan</label>
-                    <input type="text" id="farm-name" class="form-input" placeholder="contoh: Lahan Ubi Cilembu Blok A" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="farm-notes">Catatan (opsional)</label>
-                    <textarea id="farm-notes" class="form-input" placeholder="Catatan tentang lahan ini..." rows="3"></textarea>
-                </div>
-                <div class="flex gap-3" style="justify-content: flex-end; margin-top: 8px;">
-                    <button type="button" class="btn btn-outline btn-sm" id="save-cancel">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm" id="save-submit"><i class="ph ph-floppy-disk"></i> Simpan</button>
+                <div class="flex justify-end gap-3">
+                    <button type="button" id="save-cancel" class="px-4 py-2 border border-slate-soil/30 rounded font-button text-deep-moss">Batal</button>
+                    <button type="submit" id="save-submit" class="px-4 py-2 bg-deep-moss text-white rounded font-button shadow hover:bg-primary">Simpan Lahan</button>
                 </div>
             </form>
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <!-- Reopen button -->
+    <button id="fab-reopen" class="hidden fixed bottom-10 right-28 glass-panel text-deep-moss px-4 py-2 rounded-full shadow-lg font-button text-sm z-50 items-center gap-2 border border-slate-soil/20 hover:bg-white">
+        <span class="material-symbols-outlined text-[18px]">visibility</span> Lihat Analisis
+    </button>
+    <button id="save-farm-btn" class="hidden absolute top-6 right-6 bg-sunset-gold text-primary font-button px-4 py-2 rounded shadow z-10">Simpan Lahan</button>
+    
     <script src="/TerraSense-Agri/assets/js/app.js"></script>
+    <script src="/TerraSense-Agri/assets/js/map.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-        // ============================================================
-        // AUTH CHECK
-        // ============================================================
-        const currentUser = await App.checkAuth();
-        if (!currentUser) return;
-
-        // ============================================================
-        // RECOMMENDATION DATA
-        // ============================================================
-        const RECOMMENDATION_DATA = {
-            highland: {
-                name: "Dataran Tinggi",
-                elevationRange: "> 800 MDPL",
-                description: "Suhu sejuk (<22°C), curah hujan tinggi, tanah Andosol vulkanik — zona ideal untuk tanaman dataran tinggi bernilai ekonomi premium seperti kopi arabika dan sayuran.",
-                colorClass: "zone-highland",
-                plants: [
-                    { name: "Kopi Arabika", icon: "ph-fill ph-coffee", desc: "Kualitas premium, butuh ketinggian >800m & suhu sejuk" },
-                    { name: "Teh", icon: "ph-fill ph-leaf", desc: "Daun berkualitas tinggi, butuh kelembapan & kabut" },
-                    { name: "Sayuran (Kubis, Wortel, Kentang)", icon: "ph-fill ph-carrot", desc: "Harga stabil, permintaan pasar tinggi sepanjang tahun" }
-                ],
-                fertilizers: [
-                    "Pupuk Organik/Kandang sebagai pupuk dasar — dosis melimpah untuk menjaga kesuburan tanah Andosol",
-                    "NPK (15-15-15) untuk nutrisi seimbang pada fase vegetatif",
-                    "Pupuk Daun (Foliar) untuk menjaga tanaman dari stress kelembapan tinggi & kabut pegunungan"
-                ],
-                dosagePerHa: [
-                    { name: "Pupuk Organik/Kandang", amount: 5000, unit: "kg", color: "#7C9473", icon: "<i class='ph-fill ph-plant'></i>" },
-                    { name: "NPK 15-15-15", amount: 300, unit: "kg", color: "#5B7553", icon: "<i class='ph-fill ph-flask'></i>" },
-                    { name: "Pupuk Susulan (Urea)", amount: 150, unit: "kg", color: "#C67B5C", icon: "<i class='ph-fill ph-flask'></i>" },
-                    { name: "Kapur Dolomit", amount: 1000, unit: "kg", color: "#A0522D", icon: "<i class='ph-fill ph-mountains'></i>" }
-                ],
-                warnings: ["Jaga drainase baik agar akar tidak busuk akibat kelembapan tinggi", "Aplikasi fungisida preventif untuk cegah penyakit daun akibat kabut"],
-                additionalInfo: "Tanaman dataran tinggi perlu proteksi dari kabut pegunungan, suhu rendah malam hari, dan angin kencang. Mulsa tebal sangat disarankan."
-            },
-            midland: {
-                name: "Dataran Sedang",
-                elevationRange: "400–800 MDPL",
-                description: "Suhu sedang (22–26°C), kontur perbukitan, tanah transisi — zona ideal untuk komoditas unggulan Sumedang: Ubi Cilembu yang terkenal bergetah madu.",
-                colorClass: "zone-midland",
-                plants: [
-                    { name: "Ubi Cilembu", icon: "ph-fill ph-potato", desc: "Komoditas UNGGULAN Sumedang, rasa manis madu legendaris" },
-                    { name: "Kopi Robusta", icon: "ph-fill ph-coffee", desc: "Lebih toleran & adaptif di elevasi menengah" },
-                    { name: "Jagung Hibrida", icon: "ph-fill ph-corn", desc: "Varietas unggul, produktivitas dan ketahanan tinggi" }
-                ],
-                fertilizers: [
-                    "KCl (Kalium Klorida) — FOKUS UTAMA pada fase generatif agar getah madu Ubi Cilembu keluar maksimal & umbi besar",
-                    "Pupuk Organik sebagai basal untuk memperbaiki struktur tanah",
-                    "SP-36 (Fosfor) untuk pembentukan umbi dan perakaran kuat"
-                ],
-                dosagePerHa: [
-                    { name: "Urea (Nitrogen)", amount: 200, unit: "kg", color: "#C67B5C", icon: "<i class='ph-fill ph-flask'></i>" },
-                    { name: "KCl (Kalium Klorida)", amount: 200, unit: "kg", color: "#7C9473", icon: "<i class='ph-fill ph-flask'></i>" },
-                    { name: "Pupuk Organik", amount: 3000, unit: "kg", color: "#5B7553", icon: "<i class='ph-fill ph-plant'></i>" },
-                    { name: "Fosfat (SP-36)", amount: 150, unit: "kg", color: "#A0522D", icon: "<i class='ph-fill ph-flask'></i>" },
-                    { name: "Urea (DOSIS RENDAH!)", amount: 75, unit: "kg", color: "#D4845A", icon: "<i class='ph-fill ph-warning'></i>" }
-                ],
-                warnings: ["⛔ Nitrogen/Urea berlebih DILARANG — hanya menyuburkan daun, bukan umbi!", "Kalium tinggi WAJIB agar getah madu Ubi Cilembu keluar maksimal."],
-                additionalInfo: "Ubi Cilembu membutuhkan Kalium tinggi (KCl) agar madu/getah keluar sempurna. Tanam di musim kemarau untuk kualitas terbaik."
-            },
-            lowland: {
-                name: "Dataran Rendah",
-                elevationRange: "< 400 MDPL",
-                description: "Suhu hangat/panas (>26°C), penguapan air cepat, tanah Aluvial/Regosol — cocok untuk padi sawah, buah tropis, dan kedelai.",
-                colorClass: "zone-lowland",
-                plants: [
-                    { name: "Padi Sawah", icon: "ph-fill ph-plant", desc: "Staple crop utama, toleran suhu tinggi" },
-                    { name: "Mangga Gedong Gincu", icon: "ph-fill ph-tree", desc: "Varietas premium Jawa Barat, harga jual tinggi" },
-                    { name: "Kedelai", icon: "ph-fill ph-circle", desc: "Rotasi tanaman, memperbaiki nitrogen alami di tanah" }
-                ],
-                fertilizers: [
-                    "Urea (Nitrogen) untuk pertumbuhan vegetatif cepat pada padi",
-                    "SP-36 (Fosfor) untuk pembentukan bulir/buah yang optimal",
-                    "NPK Phonska (15-15-15) untuk nutrisi lengkap dan seimbang"
-                ],
-                dosagePerHa: [
-                    { name: "Urea (Nitrogen)", amount: 250, unit: "kg", color: "#7C9473", icon: "<i class='ph-fill ph-flask'></i>" },
-                    { name: "SP-36 (Fosfor)", amount: 150, unit: "kg", color: "#A0522D", icon: "<i class='ph-fill ph-flask'></i>" },
-                    { name: "Urea (Susulan)", amount: 150, unit: "kg", color: "#C67B5C", icon: "<i class='ph-fill ph-flask'></i>" },
-                    { name: "KCl (Kalium)", amount: 100, unit: "kg", color: "#D4845A", icon: "<i class='ph-fill ph-flask'></i>" }
-                ],
-                warnings: ["Manajemen IRIGASI sangat penting — tanah dataran rendah cepat kering!", "Gunakan mulsa organik untuk menjaga kelembapan tanah."],
-                additionalInfo: "Perhatikan jadwal pengairan. Padi butuh genangan teratur, sementara mangga butuh drainase baik saat musim hujan."
-            }
-        };
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
-        function determineZone(elevation) {
-            if (elevation > 800) return 'highland';
-            if (elevation >= 400) return 'midland';
-            return 'lowland';
-        }
-
-        function animateNumber(element, target, decimals = 0, duration = 600) {
-            const startTime = performance.now();
-            function update(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const eased = 1 - Math.pow(1 - progress, 3);
-                const current = target * eased;
-                element.textContent = current.toFixed(decimals);
-                if (progress < 1) requestAnimationFrame(update);
-            }
-            requestAnimationFrame(update);
-        }
-
-        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-        // ============================================================
-        // INIT MAP
-        // ============================================================
-        const sumedangCoords = [-6.8500, 107.9167];
-        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView(sumedangCoords, 13);
-
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; Esri', maxZoom: 19, maxNativeZoom: 18
-        }).addTo(map);
-
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19, opacity: 0.45
-        }).addTo(map);
-
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-        // ============================================================
-        // DRAWING SETUP
-        // ============================================================
-        const drawnItems = new L.FeatureGroup();
-        map.addLayer(drawnItems);
-
-        const polygonDrawer = new L.Draw.Polygon(map, {
-            allowIntersection: false,
-            drawError: { color: '#BF4545', message: '<strong>Error:</strong> Garis tidak boleh bersilangan!' },
-            shapeOptions: { color: '#7C9473', weight: 3, fillColor: '#7C9473', fillOpacity: 0.15 }
-        });
-
-        // ============================================================
-        // UI REFERENCES
-        // ============================================================
-        const locateBtn = document.getElementById('locate-btn');
-        const drawBtn = document.getElementById('draw-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const drawTooltip = document.getElementById('draw-tooltip');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const dataPanel = document.getElementById('data-panel');
-        const closePanelBtn = document.getElementById('close-panel-btn');
-        const errorContainer = document.getElementById('error-container');
-        const fabReopen = document.getElementById('fab-reopen');
-        const scanLine = document.getElementById('scan-line');
-        const saveFarmBtn = document.getElementById('save-farm-btn');
-        const saveModal = document.getElementById('save-modal');
-        const saveForm = document.getElementById('save-farm-form');
-        const saveCancel = document.getElementById('save-cancel');
-
-        let hasAnalysisResult = false;
-        let currentAnalysis = null;
-        let currentGeoJSON = null;
-        let loadedFarmId = null;
-
-        // ============================================================
-        // CHECK IF LOADING EXISTING FARM
-        // ============================================================
-        const urlParams = new URLSearchParams(window.location.search);
-        const farmId = urlParams.get('id');
-
-        if (farmId) {
-            loadExistingFarm(parseInt(farmId));
-        }
-
-        async function loadExistingFarm(id) {
-            try {
-                const data = await App.api(`farms.php?id=${id}`);
-                const farm = data.farm;
-
-                loadedFarmId = farm.id;
-                document.getElementById('map-title').textContent = farm.name;
-                document.getElementById('map-subtitle').textContent = `${App.getZoneName(farm.zone)} • ${parseFloat(farm.area_ha).toFixed(2)} Ha`;
-
-                // Draw the saved polygon on map
-                const geojson = typeof farm.geojson === 'string' ? JSON.parse(farm.geojson) : farm.geojson;
-                const layer = L.geoJSON(geojson, {
-                    style: { color: '#7C9473', weight: 3, fillColor: '#7C9473', fillOpacity: 0.15 }
-                });
-                drawnItems.clearLayers();
-                layer.eachLayer(l => drawnItems.addLayer(l));
-
-                // Fit map to polygon bounds
-                map.fitBounds(layer.getBounds(), { padding: [50, 50] });
-
-                // Run analysis on the loaded polygon
-                const firstLayer = drawnItems.getLayers()[0];
-                if (firstLayer) {
-                    analyzePolygon(firstLayer);
-                }
-
-                // Hide save button since farm already saved
-                saveFarmBtn.classList.add('hidden');
-                resetBtn.classList.remove('hidden');
-                drawBtn.classList.remove('cta-pulse');
-
-            } catch (err) {
-                App.toast('Gagal memuat data lahan', 'error');
-            }
-        }
-
-        // ============================================================
-        // LOADING STEPS
-        // ============================================================
-        function updateLoadingStep(step) {
-            const steps = [document.getElementById('load-step-1'), document.getElementById('load-step-2'), document.getElementById('load-step-3')];
-            steps.forEach((el, i) => {
-                const dot = el.querySelector('.load-dot');
-                const text = el.querySelector('.load-text');
-                if (i < step) {
-                    dot.className = 'load-dot done';
-                    text.className = 'load-text done';
-                } else if (i === step) {
-                    dot.className = 'load-dot active';
-                    text.className = 'load-text active';
-                } else {
-                    dot.className = 'load-dot pending';
-                    text.className = 'load-text pending';
-                }
-            });
-        }
-
-        function triggerScanLine() {
-            scanLine.classList.remove('hidden');
-            scanLine.style.animation = 'none';
-            void scanLine.offsetWidth;
-            scanLine.style.animation = 'scanLine 3s ease-in-out';
-            setTimeout(() => scanLine.classList.add('hidden'), 3100);
-        }
-
-        // ============================================================
-        // API CALLS
-        // ============================================================
-        async function fetchElevationData(lat, lon) {
-            const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`);
-            if (!res.ok) throw new Error('Gagal mengambil data elevasi.');
-            const data = await res.json();
-            return data.elevation[0];
-        }
-
-        async function fetchWeatherData(lat, lon) {
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation&timezone=Asia/Jakarta`);
-            if (!res.ok) throw new Error('Gagal mengambil data cuaca.');
-            const data = await res.json();
-            return {
-                temperature: data.current.temperature_2m,
-                humidity: data.current.relative_humidity_2m,
-                precipitation: data.current.precipitation
-            };
-        }
-
-        // ============================================================
-        // ERROR HANDLING
-        // ============================================================
-        function displayError(message) {
-            errorContainer.innerHTML = `
-                <div class="error-message">
-                    <div style="display:flex; align-items:flex-start; gap:8px;">
-                        <span style="font-size:1.1rem; flex-shrink:0; color: var(--color-warning);"><i class="ph-fill ph-warning"></i></span>
-                        <div>
-                            <p style="font-weight:600; margin-bottom:4px;">Terjadi Kesalahan</p>
-                            <p style="font-size:0.8rem; opacity:0.8;">${message}</p>
-                            <p style="font-size:0.7rem; opacity:0.6; margin-top:8px;">Coba gambar ulang lahan Anda atau periksa koneksi internet.</p>
-                        </div>
-                    </div>
-                </div>`;
-            errorContainer.classList.remove('hidden');
-            dataPanel.classList.remove('hidden');
-            dataPanel.classList.add('animate-panel-in');
-        }
-
-        function clearError() {
-            errorContainer.innerHTML = '';
-            errorContainer.classList.add('hidden');
-        }
-
-        // ============================================================
-        // RENDER RECOMMENDATIONS
-        // ============================================================
-        function displayRecommendations(zoneKey, elevation) {
-            const zone = RECOMMENDATION_DATA[zoneKey];
-
-            document.getElementById('zone-badge').innerHTML = `<span class="zone-badge ${zone.colorClass}">${zone.name} — ${Math.round(elevation)} MDPL</span>`;
-            document.getElementById('zone-description').textContent = zone.description;
-
-            const plantsContainer = document.getElementById('plants-container');
-            plantsContainer.innerHTML = '';
-            zone.plants.forEach((plant, index) => {
-                const card = document.createElement('div');
-                card.className = 'plant-card';
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(12px)';
-                card.innerHTML = `
-                    <div class="plant-icon"><i class="${plant.icon}"></i></div>
-                    <div style="min-width:0;">
-                        <div style="font-weight:600; font-size:0.88rem; color: var(--color-text-primary);">${plant.name}</div>
-                        <div style="font-size:0.68rem; color: var(--color-text-muted); line-height:1.4;">${plant.desc}</div>
-                    </div>`;
-                plantsContainer.appendChild(card);
-                setTimeout(() => {
-                    card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 100 + index * 80);
-            });
-
-            const fertContainer = document.getElementById('fertilizer-container');
-            fertContainer.innerHTML = '';
-            zone.fertilizers.forEach(text => {
-                const item = document.createElement('div');
-                item.style.cssText = 'display:flex; align-items:flex-start; gap:10px; padding:6px 0;';
-                item.innerHTML = `
-                    <span style="color:var(--color-terracotta); font-size:0.75rem; margin-top:2px; flex-shrink:0;">●</span>
-                    <span style="color:var(--color-text-secondary); font-size:0.78rem; line-height:1.6;">${text}</span>`;
-                fertContainer.appendChild(item);
-            });
-
-            const notesContainer = document.getElementById('notes-container');
-            notesContainer.innerHTML = '';
-            if (zone.warnings && zone.warnings.length > 0) {
-                const wb = document.createElement('div');
-                wb.className = 'warning-box';
-                wb.innerHTML = zone.warnings.map(w => `<li style="display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;">
-                        <span style="font-size:1.1rem; flex-shrink:0; color: var(--color-warning);"><i class="ph-fill ph-warning"></i></span>
-                        <span style="font-size:0.8rem; color:var(--color-text-secondary); line-height:1.5;">${w}</span>
-                    </li>`).join('');
-                notesContainer.appendChild(wb);
-            }
-            if (zone.additionalInfo) {
-                const ib = document.createElement('div');
-                ib.className = 'info-box';
-                ib.innerHTML = `<p>💡 ${zone.additionalInfo}</p>`;
-                notesContainer.appendChild(ib);
-            }
-        }
-
-        function displayDosageCalculation(zoneKey, areaInHectares) {
-            const zone = RECOMMENDATION_DATA[zoneKey];
-            const dosageContainer = document.getElementById('dosage-container');
-            document.getElementById('calc-area-label').textContent = areaInHectares.toFixed(2);
-            dosageContainer.innerHTML = '';
-
-            zone.dosagePerHa.forEach((item, index) => {
-                const totalDose = item.amount * areaInHectares;
-                const displayDose = totalDose < 10 ? totalDose.toFixed(1) : Math.round(totalDose).toLocaleString('id-ID');
-                const barPercent = Math.min(100, (totalDose / (item.amount * 5)) * 100);
-
-                const card = document.createElement('div');
-                card.className = 'dose-card';
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(10px)';
-                card.innerHTML = `
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-                        <span style="color:var(--color-text-secondary); font-size:0.78rem; font-weight:500; display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:0.88rem;">${item.icon}</span>
-                            ${item.name}
-                        </span>
-                        <span style="font-size:0.6rem; color:var(--color-text-dim); font-family:monospace;">${item.amount.toLocaleString('id-ID')} ${item.unit}/Ha</span>
-                    </div>
-                    <div style="display:flex; align-items:baseline; justify-content:space-between;">
-                        <div style="display:flex; align-items:baseline; gap:6px;">
-                            <span style="font-size:1.25rem; font-weight:800; font-family:'DM Serif Display',serif; color:${item.color};">${displayDose}</span>
-                            <span style="font-size:0.75rem; font-weight:600; color:var(--color-terracotta);">${item.unit}</span>
-                        </div>
-                        <div style="font-size:0.6rem; color:var(--color-text-dim);">untuk ${areaInHectares.toFixed(2)} Ha</div>
-                    </div>
-                    <div style="width:100%; background:var(--color-border); border-radius:4px; height:4px; margin-top:10px; overflow:hidden;">
-                        <div class="progress-bar-fill" style="width:0%; height:4px; border-radius:4px; background-color:${item.color};"></div>
-                    </div>`;
-                dosageContainer.appendChild(card);
-
-                setTimeout(() => {
-                    card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                    const bar = card.querySelector('.progress-bar-fill');
-                    if (bar) setTimeout(() => bar.style.width = barPercent + '%', 100);
-                }, 80 + index * 100);
-            });
-        }
-
-        // ============================================================
-        // MAIN ANALYSIS
-        // ============================================================
-        async function analyzePolygon(layer) {
-            try {
-                clearError();
-                loadingOverlay.classList.remove('hidden');
-                dataPanel.classList.add('hidden');
-                fabReopen.classList.add('hidden');
-                hasAnalysisResult = false;
-
-                updateLoadingStep(0);
-                triggerScanLine();
-
-                const geoJson = layer.toGeoJSON();
-                const feature = geoJson.features ? geoJson.features[0] : geoJson;
-
-                if (!feature || !feature.geometry || feature.geometry.type !== 'Polygon') {
-                    throw new Error('Bentuk lahan tidak valid. Silakan gambar ulang dengan minimal 3 titik.');
-                }
-
-                currentGeoJSON = feature;
-
-                const centroid = turf.centroid(feature);
-                const [cLon, cLat] = centroid.geometry.coordinates;
-                const areaHa = turf.area(feature) / 10000;
-
-                await sleep(400);
-                updateLoadingStep(1);
-
-                const [elevation, weather] = await Promise.all([
-                    fetchElevationData(cLat, cLon),
-                    fetchWeatherData(cLat, cLon)
-                ]);
-
-                updateLoadingStep(2);
-                await sleep(300);
-
-                loadingOverlay.classList.add('hidden');
-
-                animateNumber(document.getElementById('data-area'), areaHa, 2, 800);
-                animateNumber(document.getElementById('data-elevation'), elevation, 0, 800);
-                animateNumber(document.getElementById('data-temperature'), weather.temperature, 1, 600);
-                animateNumber(document.getElementById('data-humidity'), weather.humidity, 0, 600);
-                animateNumber(document.getElementById('data-precipitation'), weather.precipitation, 1, 600);
-
-                const zoneKey = determineZone(elevation);
-                displayRecommendations(zoneKey, elevation);
-                displayDosageCalculation(zoneKey, areaHa);
-
-                const now = new Date();
-                document.getElementById('analysis-timestamp').textContent =
-                    `Analisis pada ${now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • ${now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB`;
-
-                dataPanel.classList.remove('hidden');
-                dataPanel.classList.add('animate-panel-in');
-
-                resetBtn.classList.remove('hidden');
-                hasAnalysisResult = true;
-                drawBtn.classList.remove('cta-pulse');
-
-                // Show save button only if not already a saved farm
-                if (!loadedFarmId) {
-                    saveFarmBtn.classList.remove('hidden');
-                }
-
-                // Store analysis data
-                currentAnalysis = {
-                    areaHa, elevation, zoneKey,
-                    latitude: cLat, longitude: cLon,
-                    temperature: weather.temperature,
-                    humidity: weather.humidity,
-                    precipitation: weather.precipitation,
-                    recommendations: RECOMMENDATION_DATA[zoneKey].plants.map(p => p.name),
-                    dosage: RECOMMENDATION_DATA[zoneKey].dosagePerHa.map(d => ({
-                        name: d.name,
-                        amount_per_ha: d.amount,
-                        total: d.amount * areaHa,
-                        unit: d.unit
-                    }))
-                };
-
-            } catch (error) {
-                console.error('❌ Error:', error);
-                loadingOverlay.classList.add('hidden');
-                displayError(error.message || 'Terjadi kesalahan teknis.');
-                resetBtn.classList.remove('hidden');
-            }
-        }
-
-        // ============================================================
-        // EVENT HANDLERS
-        // ============================================================
-        let userMarker = null;
-
-        locateBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            locateBtn.classList.add('active');
-            map.locate({ setView: true, maxZoom: 16 });
-        });
-
-        map.on('locationfound', function(e) {
-            locateBtn.classList.remove('active');
-            if (!userMarker) {
-                userMarker = L.circleMarker(e.latlng, {
-                    radius: 8,
-                    fillColor: "#7C9473",
-                    color: "#3D2B1F",
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map);
-            } else {
-                userMarker.setLatLng(e.latlng);
+        // Use external map.js logic but modify DOM queries slightly if needed.
+        // We will include a slim wrapper to make the map work with the new IDs
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await App.checkAuth();
+            if(!user) return;
+            
+            if(window.initMap) {
+                window.initMap();
             }
         });
-
-        map.on('locationerror', function(e) {
-            locateBtn.classList.remove('active');
-            App.toast('Gagal mendapatkan lokasi Anda.', 'error');
-        });
-
-        drawBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            polygonDrawer.enable();
-            drawBtn.classList.add('active');
-            drawBtn.classList.remove('cta-pulse');
-            drawTooltip.classList.remove('hidden');
-        });
-
-        map.on(L.Draw.Event.CREATED, function (event) {
-            drawnItems.clearLayers();
-            drawnItems.addLayer(event.layer);
-            polygonDrawer.disable();
-            drawBtn.classList.remove('active');
-            drawTooltip.classList.add('hidden');
-            loadedFarmId = null; // New polygon = new farm
-            analyzePolygon(event.layer);
-        });
-
-        map.on('draw:drawstop', function () {
-            drawBtn.classList.remove('active');
-            drawTooltip.classList.add('hidden');
-        });
-
-        resetBtn.addEventListener('click', () => {
-            drawnItems.clearLayers();
-            dataPanel.classList.add('hidden');
-            resetBtn.classList.add('hidden');
-            fabReopen.classList.add('hidden');
-            saveFarmBtn.classList.add('hidden');
-            hasAnalysisResult = false;
-            currentAnalysis = null;
-            currentGeoJSON = null;
-            loadedFarmId = null;
-            clearError();
-            drawBtn.classList.add('cta-pulse');
-            // Reset UI
-            document.getElementById('map-title').textContent = 'Peta Lahan';
-            document.getElementById('map-subtitle').textContent = 'Gambar batas lahan untuk memulai analisis';
-        });
-
-        closePanelBtn.addEventListener('click', () => {
-            dataPanel.classList.add('hidden');
-            if (hasAnalysisResult) fabReopen.classList.remove('hidden');
-        });
-
-        fabReopen.addEventListener('click', () => {
-            dataPanel.classList.remove('hidden');
-            dataPanel.classList.add('animate-panel-in');
-            fabReopen.classList.add('hidden');
-        });
-
-        // ============================================================
-        // SAVE FARM
-        // ============================================================
-        saveFarmBtn.addEventListener('click', () => {
-            saveModal.classList.add('active');
-            document.getElementById('farm-name').focus();
-        });
-
-        saveCancel.addEventListener('click', () => {
-            saveModal.classList.remove('active');
-        });
-
-        saveForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentAnalysis || !currentGeoJSON) {
-                App.toast('Tidak ada data analisis untuk disimpan', 'error');
-                return;
-            }
-
-            const submitBtn = document.getElementById('save-submit');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner spinner-sm"></span> Menyimpan...';
-
-            const name = document.getElementById('farm-name').value.trim() || 'Lahan Saya';
-            const notes = document.getElementById('farm-notes').value.trim();
-
-            try {
-                // Save farm
-                const farmData = await App.api('farms.php?action=save', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        name,
-                        geojson: JSON.stringify(currentGeoJSON),
-                        area_ha: currentAnalysis.areaHa,
-                        elevation: currentAnalysis.elevation,
-                        zone: currentAnalysis.zoneKey,
-                        latitude: currentAnalysis.latitude,
-                        longitude: currentAnalysis.longitude,
-                        notes,
-                    }),
-                });
-
-                // Save analysis
-                await App.api('farms.php?action=analyze', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        farm_id: farmData.farm_id,
-                        temperature: currentAnalysis.temperature,
-                        humidity: currentAnalysis.humidity,
-                        precipitation: currentAnalysis.precipitation,
-                        zone: currentAnalysis.zoneKey,
-                        recommendations: currentAnalysis.recommendations,
-                        dosage: currentAnalysis.dosage,
-                    }),
-                });
-
-                loadedFarmId = farmData.farm_id;
-                saveModal.classList.remove('active');
-                saveFarmBtn.classList.add('hidden');
-                App.toast('🌾 Lahan berhasil disimpan!', 'success');
-
-                document.getElementById('map-title').textContent = '🌿 ' + name;
-
-            } catch (err) {
-                App.toast(err.message || 'Gagal menyimpan lahan', 'error');
-            }
-
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="ph ph-floppy-disk"></i> Simpan';
-        });
-    });
     </script>
-</body>
-</html>
+    </body></html>

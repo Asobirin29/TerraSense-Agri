@@ -1,14 +1,15 @@
 <!DOCTYPE html>
+
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar — TerraSense Agri</title>
-    <meta name="description" content="Daftar akun TerraSense Agri gratis. Kelola lahan pertanian Anda dengan rekomendasi tanaman dan pupuk presisi.">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="/TerraSense-Agri/assets/css/style.css">
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Daftar — TerraSense Agri</title>
+<meta content="Daftar akun TerraSense Agri gratis. Kelola lahan pertanian Anda dengan rekomendasi tanaman dan pupuk presisi." name="description"/>
+<link href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🌿&lt;/text&gt;&lt;/svg&gt;" rel="icon"/>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<link href="/TerraSense-Agri/assets/css/style.css" rel="stylesheet"/>
+<style>
         .auth-page {
             min-height: 100vh;
             display: grid;
@@ -188,110 +189,82 @@
     </style>
 </head>
 <body>
-    <div class="auth-page">
-        <!-- Decorative Side -->
-        <div class="auth-decoration">
-            <div class="auth-deco-content">
-                <div class="auth-deco-icon"><i class="ph-fill ph-plant"></i></div>
-                <h2 class="auth-deco-title">Bergabung dengan<br>TerraSense</h2>
-                <p class="auth-deco-desc">
+<div class="auth-page">
+<!-- Decorative Side -->
+<div class="auth-decoration" style="background: linear-gradient(135deg, #163429 0%, #2D4B3F 100%); padding: 64px; border-right: 1px solid rgba(255,255,255,0.1);">
+<div class="auth-deco-content">
+<div class="auth-deco-icon" style="color: #E4A853; font-size: 4rem; margin-bottom: 32px;"><i class="ph-fill ph-plant"></i></div>
+<h2 class="auth-deco-title" style="font-family: 'DM Serif Display', serif; font-size: 3rem; line-height: 1.1; color: #FAF9F6; margin-bottom: 24px;">Bergabung dengan<br/>TerraSense</h2>
+<p class="auth-deco-desc">
                     Gratis selamanya. Mulai kelola lahan pertanian Anda dengan teknologi presisi.
                 </p>
-                <div class="auth-deco-benefits">
-                    <div class="auth-deco-benefit">
-                        <i class="ph-fill ph-map-trifold"></i>
-                        <span>Petakan & simpan data lahan tak terbatas</span>
-                    </div>
-                    <div class="auth-deco-benefit">
-                        <i class="ph-fill ph-thermometer"></i>
-                        <span>Analisis cuaca & elevasi real-time</span>
-                    </div>
-                    <div class="auth-deco-benefit">
-                        <i class="ph-fill ph-plant"></i>
-                        <span>Rekomendasi tanaman & pupuk presisi</span>
-                    </div>
-                    <div class="auth-deco-benefit">
-                        <i class="ph-fill ph-chart-bar"></i>
-                        <span>Dashboard riwayat analisis lengkap</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Form Side -->
-        <div class="auth-form-side">
-            <div class="auth-container animate-fade-in">
-                <!-- Header -->
-                <div class="auth-header">
-                    <div class="auth-logo"><i class="ph-fill ph-plant"></i></div>
-                    <h1 class="auth-title">
-                        <span>Daftar di </span><span>TerraSense</span>
-                    </h1>
-                    <p class="auth-subtitle">Buat akun petani gratis & mulai kelola lahan Anda</p>
-                </div>
-
-                <!-- Register Card -->
-                <div class="auth-card">
-                    <div class="form-error-box" id="register-error"></div>
-
-                    <form id="register-form" autocomplete="on">
-                        <div class="form-group">
-                            <label class="form-label" for="reg-name">Nama Lengkap *</label>
-                            <input type="text" id="reg-name" class="form-input" placeholder="Masukkan nama lengkap" required autocomplete="name">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="reg-email">Email *</label>
-                            <input type="email" id="reg-email" class="form-input" placeholder="petani@example.com" required autocomplete="email">
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" for="reg-password">Password *</label>
-                                <div class="password-wrapper">
-                                    <input type="password" id="reg-password" class="form-input" placeholder="Min. 6 karakter" required minlength="6" autocomplete="new-password" style="padding-right: 36px">
-                                    <button type="button" class="toggle-password" tabindex="-1">
-                                        <span class="eye-icon"><i class="ph ph-eye"></i></span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="reg-confirm-password">Konfirmasi Password *</label>
-                                <div class="password-wrapper">
-                                    <input type="password" id="reg-confirm-password" class="form-input" placeholder="Ulangi password" required autocomplete="new-password" style="padding-right: 36px">
-                                    <button type="button" class="toggle-password" tabindex="-1">
-                                        <span class="eye-icon"><i class="ph ph-eye"></i></span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" for="reg-phone">No. HP</label>
-                                <input type="tel" id="reg-phone" class="form-input" placeholder="08xxxxxxxxxx" autocomplete="tel">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="reg-location">Lokasi</label>
-                                <input type="text" id="reg-location" class="form-input" placeholder="Sumedang, Jawa Barat" value="Sumedang, Jawa Barat" autocomplete="address-level2">
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-lg btn-full" style="margin-top: 8px;">
+<div class="auth-deco-benefits"><div class="auth-deco-benefit" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px; margin-bottom: 12px;"><i class="ph-fill ph-map-trifold" style="color: #E4A853; font-size: 1.4rem;"></i><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;">Petakan &amp; simpan data lahan tak terbatas</span></div><div class="auth-deco-benefit" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px; margin-bottom: 12px;"><i class="ph-fill ph-thermometer" style="color: #E4A853; font-size: 1.4rem;"></i><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;">Analisis cuaca &amp; elevasi real-time</span></div><div class="auth-deco-benefit" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px; margin-bottom: 12px;"><i class="ph-fill ph-plant" style="color: #E4A853; font-size: 1.4rem;"></i><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;">Rekomendasi tanaman &amp; pupuk presisi</span></div><div class="auth-deco-benefit" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 12px;"><i class="ph-fill ph-chart-bar" style="color: #E4A853; font-size: 1.4rem;"></i><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;">Dashboard riwayat analisis lengkap</span></div></div>
+</div>
+</div>
+<!-- Form Side -->
+<div class="auth-form-side" style="background-color: #fff8f3; padding: 60px 40px;">
+<div class="auth-container animate-fade-in">
+<!-- Header -->
+<div class="auth-header">
+<div class="auth-logo" style="color: #163429; font-size: 3rem; margin-bottom: 16px;"><i class="ph-fill ph-plant"></i></div>
+<h1 class="auth-title"><span style="color: #211b12;">Daftar di </span><span style="color: #9e4223;">TerraSense</span></h1>
+<p class="auth-subtitle">Buat akun petani gratis &amp; mulai kelola lahan Anda</p>
+</div>
+<!-- Register Card -->
+<div class="auth-card">
+<div class="form-error-box" id="register-error"></div>
+<form autocomplete="on" id="register-form">
+<div class="form-group">
+<label class="form-label" for="reg-name" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; color: #414845; font-size: 0.85rem; margin-bottom: 6px; display: block;">Nama Lengkap *</label>
+<input autocomplete="name" class="form-input" id="reg-name" placeholder="Masukkan nama lengkap" required="" style="background: #ffffff; border: 1px solid #c1c8c3; border-radius: 8px; padding: 12px 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; transition: border-color 0.2s;" type="text"/>
+</div>
+<div class="form-group">
+<label class="form-label" for="reg-email" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; color: #414845; font-size: 0.85rem; margin-bottom: 6px; display: block;">Email *</label>
+<input autocomplete="email" class="form-input" id="reg-email" placeholder="petani@example.com" required="" style="background: #ffffff; border: 1px solid #c1c8c3; border-radius: 8px; padding: 12px 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; transition: border-color 0.2s;" type="email"/>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label class="form-label" for="reg-password" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; color: #414845; font-size: 0.85rem; margin-bottom: 6px; display: block;">Password *</label>
+<div class="password-wrapper">
+<input autocomplete="new-password" class="form-input" id="reg-password" minlength="6" placeholder="Min. 6 karakter" required="" style="background: #ffffff; border: 1px solid #c1c8c3; border-radius: 8px; padding: 12px 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; transition: border-color 0.2s;" type="password"/>
+<button class="toggle-password" tabindex="-1" type="button">
+<span class="eye-icon"><i class="ph ph-eye"></i></span>
+</button>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label" for="reg-confirm-password" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; color: #414845; font-size: 0.85rem; margin-bottom: 6px; display: block;">Konfirmasi Password *</label>
+<div class="password-wrapper">
+<input autocomplete="new-password" class="form-input" id="reg-confirm-password" placeholder="Ulangi password" required="" style="background: #ffffff; border: 1px solid #c1c8c3; border-radius: 8px; padding: 12px 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; transition: border-color 0.2s;" type="password"/>
+<button class="toggle-password" tabindex="-1" type="button">
+<span class="eye-icon"><i class="ph ph-eye"></i></span>
+</button>
+</div>
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label class="form-label" for="reg-phone" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; color: #414845; font-size: 0.85rem; margin-bottom: 6px; display: block;">No. HP</label>
+<input autocomplete="tel" class="form-input" id="reg-phone" placeholder="08xxxxxxxxxx" style="background: #ffffff; border: 1px solid #c1c8c3; border-radius: 8px; padding: 12px 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; transition: border-color 0.2s;" type="tel"/>
+</div>
+<div class="form-group">
+<label class="form-label" for="reg-location" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; color: #414845; font-size: 0.85rem; margin-bottom: 6px; display: block;">Lokasi</label>
+<input autocomplete="address-level2" class="form-input" id="reg-location" placeholder="Sumedang, Jawa Barat" style="background: #ffffff; border: 1px solid #c1c8c3; border-radius: 8px; padding: 12px 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; transition: border-color 0.2s;" type="text" value="Sumedang, Jawa Barat"/>
+</div>
+</div>
+<button class="btn btn-primary btn-lg btn-full" style="background-color: #9e4223; color: #ffffff; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; padding: 16px; border-radius: 8px; border: none; margin-top: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(158, 66, 35, 0.2);" type="submit">
                             Daftar Sekarang
                         </button>
-                    </form>
-                </div>
-
-                <!-- Footer -->
-                <div class="auth-footer">
-                    Sudah punya akun? <a href="/TerraSense-Agri/pages/login.html">Masuk di sini</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="/TerraSense-Agri/assets/js/app.js"></script>
-    <script src="/TerraSense-Agri/assets/js/auth.js"></script>
+</form>
+</div>
+<!-- Footer -->
+<div class="auth-footer">
+                    Sudah punya akun? <a href="/TerraSense-Agri/pages/login.html" style="color: #9e4223; text-decoration: none; font-weight: 700;">Masuk di sini</a>
+</div>
+</div>
+</div>
+</div>
+<script src="/TerraSense-Agri/assets/js/app.js"></script>
+<script src="/TerraSense-Agri/assets/js/auth.js"></script>
 </body>
 </html>

@@ -19,14 +19,15 @@
 
         /* Decorative side */
         .auth-decoration {
-            background: linear-gradient(135deg, var(--color-soil) 0%, var(--color-clay) 50%, var(--color-terracotta) 100%);
+            background: linear-gradient(135deg, #9e4223 0%, #C35E3D 50%, #D4845A 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 48px;
+            padding: 64px;
             position: relative;
             overflow: hidden;
+            border-right: 1px solid rgba(255,255,255,0.1);
         }
 
         .auth-decoration::before {
@@ -41,48 +42,54 @@
             position: relative;
             z-index: 1;
             text-align: center;
-            color: var(--color-wheat);
+            color: #FAF9F6;
         }
 
         .auth-deco-icon {
-            font-size: 5rem;
-            margin-bottom: 24px;
-            opacity: 0.9;
+            font-size: 4rem;
+            margin-bottom: 32px;
+            color: #E4A853;
         }
 
         .auth-deco-title {
             font-family: 'DM Serif Display', serif;
-            font-size: 2.2rem;
+            font-size: 3rem;
             font-weight: 400;
-            margin-bottom: 12px;
-            color: var(--color-wheat);
+            line-height: 1.1;
+            margin-bottom: 24px;
         }
 
         .auth-deco-desc {
             font-size: 0.95rem;
-            opacity: 0.75;
-            max-width: 320px;
+            opacity: 0.85;
+            max-width: 400px;
             line-height: 1.7;
+            margin: 0 auto 40px;
         }
 
         .auth-deco-features {
-            margin-top: 40px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
+            text-align: left;
         }
 
         .auth-deco-feature {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-            opacity: 0.7;
+            gap: 16px;
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
         }
 
         .auth-deco-feature i {
-            font-size: 1.2rem;
-            opacity: 0.9;
+            font-size: 1.4rem;
+            color: #E4A853;
         }
 
         /* Form side */
@@ -90,8 +97,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px;
-            background: var(--color-cream);
+            padding: 60px 40px;
+            background: #fff8f3;
+            overflow-y: auto;
+            max-height: 100vh;
         }
 
         .auth-container {
@@ -105,19 +114,20 @@
         }
 
         .auth-logo {
-            font-size: 2.5rem;
-            margin-bottom: 12px;
-            color: var(--color-sage);
+            font-size: 3rem;
+            margin-bottom: 16px;
+            color: #163429;
         }
 
         .auth-title {
             font-size: 2rem;
             font-weight: 400;
             font-family: 'DM Serif Display', serif;
+            line-height: 1.2;
         }
 
-        .auth-title span:first-child { color: var(--color-bark); }
-        .auth-title span:last-child { color: var(--color-terracotta); }
+        .auth-title .title-main { color: #211b12; }
+        .auth-title .title-accent { color: #9e4223; }
 
         .auth-subtitle {
             font-size: 0.88rem;
@@ -138,24 +148,40 @@
 
         .auth-footer a {
             font-weight: 600;
-            color: var(--color-terracotta);
+            color: #9e4223;
+            text-decoration: none;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
         }
 
         .password-wrapper {
             position: relative;
         }
 
+        .password-wrapper .form-input {
+            padding-right: 40px;
+        }
+
         .toggle-password {
             position: absolute;
-            right: 4px;
+            right: 8px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 1rem;
-            padding: 4px;
+            font-size: 1.1rem;
+            padding: 8px;
             color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-password:hover {
+            color: var(--color-text-primary);
         }
 
         .auth-divider {
@@ -177,15 +203,89 @@
             background: var(--color-border);
         }
 
+        .form-label {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            color: #414845;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-input {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid #c1c8c3;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2D4B3F;
+            box-shadow: 0 0 0 3px rgba(45, 75, 63, 0.1);
+        }
+
         .form-error-box {
             background: rgba(191, 69, 69, 0.06);
             border: 1px solid rgba(191, 69, 69, 0.2);
-            border-radius: var(--radius-md);
+            border-radius: 8px;
             padding: 12px 16px;
             margin-bottom: 16px;
             font-size: 0.85rem;
             color: var(--color-danger);
             display: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: #9e4223;
+            color: #ffffff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            padding: 16px;
+            border-radius: 8px;
+            border: none;
+            margin-top: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(158, 66, 35, 0.2);
+        }
+
+        .btn-submit:hover {
+            background-color: #8a3a1f;
+            box-shadow: 0 6px 16px rgba(158, 66, 35, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            background-color: transparent;
+            color: #211b12;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #c1c8c3;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-secondary:hover {
+            background-color: #F4EDE1;
+            border-color: #2D4B3F;
         }
 
         @media (max-width: 768px) {
@@ -201,7 +301,7 @@
         <div class="auth-decoration">
             <div class="auth-deco-content">
                 <div class="auth-deco-icon"><i class="ph-fill ph-plant"></i></div>
-                <h2 class="auth-deco-title">Selamat Datang<br>Kembali</h2>
+                <h2 class="auth-deco-title">Selamat Datang<br/>Kembali</h2>
                 <p class="auth-deco-desc">
                     Kelola lahan pertanian Anda dan dapatkan wawasan presisi untuk hasil panen yang lebih baik.
                 </p>
@@ -229,7 +329,7 @@
                 <div class="auth-header">
                     <div class="auth-logo"><i class="ph-fill ph-plant"></i></div>
                     <h1 class="auth-title">
-                        <span>Terra</span><span>Sense</span>
+                        <span class="title-main">Terra</span><span class="title-accent">Sense</span>
                     </h1>
                     <p class="auth-subtitle">Masuk ke akun petani Anda</p>
                 </div>
@@ -247,21 +347,21 @@
                         <div class="form-group">
                             <label class="form-label" for="login-password">Password</label>
                             <div class="password-wrapper">
-                                <input type="password" id="login-password" class="form-input" placeholder="Masukkan password" required autocomplete="current-password" style="padding-right: 36px">
-                                <button type="button" class="toggle-password" tabindex="-1">
-                                    <span class="eye-icon"><i class="ph ph-eye"></i></span>
+                                <input type="password" id="login-password" class="form-input" placeholder="Masukkan password" required autocomplete="current-password">
+                                <button type="button" class="toggle-password" tabindex="-1" data-target="login-password">
+                                    <i class="ph ph-eye"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary btn-lg btn-full" style="margin-top: 12px;">
+                        <button type="submit" class="btn-submit">
                             Masuk ke Dashboard
                         </button>
                     </form>
 
                     <div class="auth-divider">atau</div>
 
-                    <a href="/TerraSense-Agri/pages/register.html" class="btn btn-secondary btn-full">
+                    <a href="/TerraSense-Agri/pages/register.html" class="btn-secondary">
                         Buat Akun Petani Baru
                     </a>
                 </div>
