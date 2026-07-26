@@ -210,4 +210,99 @@ const App = {
         }
         requestAnimationFrame(update);
     },
+
+    // ============================================
+    // SIDEBAR TOGGLE
+    // ============================================
+    initSidebarToggle() {
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('sidebar-toggled');
+                setTimeout(() => {
+                    if (window.map) window.map.invalidateSize();
+                }, 300);
+            });
+        }
+        
+        if (overlay) {
+            overlay.addEventListener('click', () => {
+                document.body.classList.remove('sidebar-toggled');
+                setTimeout(() => {
+                    if (window.map) window.map.invalidateSize();
+                }, 300);
+            });
+        }
+    },
+
+    // ============================================
+    // SIDEBAR FARMS MENU
+    // ============================================
+    async initSidebarFarms() {
+        const toggleBtn = document.getElementById('toggle-daftar-lahan');
+        const listContainer = document.getElementById('sidebar-farms-list');
+        const icon = document.getElementById('daftar-lahan-icon');
+        
+        if (!toggleBtn || !listContainer) return;
+
+        // Toggle logic
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            listContainer.classList.toggle('hidden');
+            listContainer.classList.toggle('flex');
+            if (icon) {
+                icon.classList.toggle('rotate-180');
+            }
+        });
+
+        try {
+            const data = await this.api('farms.php');
+            listContainer.innerHTML = ''; // clear loading
+            const cropsRes = await fetch('/TerraSense-Agri/assets/data/crops.json').catch(() => null);
+            let crops = [];
+            if (cropsRes && cropsRes.ok) crops = await cropsRes.json();
+
+            if (data.farms && data.farms.length > 0) {
+                data.farms.forEach(farm => {
+                    const a = document.createElement('a');
+                    a.href = `/TerraSense-Agri/pages/farm-map.html?id=${farm.id}`;
+                    
+                    const isPlanted = farm.crop_id && farm.planting_date;
+                    const cropName = isPlanted ? (crops.find(c => c.id == farm.crop_id || c.name == farm.crop_id)?.name || 'Ditanami') : 'Lahan Kosong';
+                    const badgeClass = isPlanted ? 'bg-sage-accent text-primary' : 'bg-white/10 text-white/50';
+
+                    a.className = 'text-on-primary/60 hover:text-on-primary hover:bg-primary-container/20 px-3 py-2 rounded-md transition-colors flex flex-col gap-1';
+                    a.innerHTML = `
+                        <div class="flex items-center gap-2 text-sm font-medium">
+                            <span class="material-symbols-outlined text-[16px]">eco</span>
+                            <span class="truncate">${farm.name}</span>
+                        </div>
+                        <div class="flex items-center justify-between pl-6 mt-0.5">
+                            <span class="text-xs opacity-70">${parseFloat(farm.area_ha).toFixed(2)} Ha</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${badgeClass}">${cropName}</span>
+                        </div>
+                    `;
+                    listContainer.appendChild(a);
+                });
+            } else {
+                listContainer.innerHTML = '<div class="text-on-primary/50 text-xs px-3 py-2">Belum ada lahan</div>';
+            }
+        } catch (err) {
+            console.error('Failed to load farms for sidebar', err);
+            listContainer.innerHTML = '<div class="text-error text-xs px-3 py-2">Gagal memuat lahan</div>';
+        }
+    }
 };
+
+function initApp() {
+    if (App.initSidebarToggle) App.initSidebarToggle();
+    if (App.initSidebarFarms) App.initSidebarFarms();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}

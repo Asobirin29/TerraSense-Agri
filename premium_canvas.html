@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraSense Agri - Premium Edition</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ivory: '#F9FAFB',
+                        forest: '#065F46',
+                        warmgold: '#D97706',
+                        charcoal: '#1F2937'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Leaflet & Leaflet.draw -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <!-- Turf.js for Geospatial Math -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <!-- html2pdf.js for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100vw; z-index: 0; }
+        .leaflet-draw-toolbar a { background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet.png'); }
+        .leaflet-draw-toolbar a.leaflet-draw-edit-remove { background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet.png'); }
+        
+        /* Spinner Animation */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #065F46;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Custom scrollbar for sidebar */
+        .sidebar-scroll::-webkit-scrollbar { width: 6px; }
+        .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 10px; }
+    </style>
+</head>
+<body class="overflow-hidden bg-ivory text-charcoal">
+
+    <!-- Leaflet Map Container -->
+    <div id="map" class="absolute inset-0"></div>
+
+    <!-- Right Floating Side-Panel -->
+    <div class="absolute right-4 top-4 bottom-4 w-[26rem] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-10 flex flex-col overflow-hidden">
+        
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+            <div class="flex items-center space-x-2">
+                <i class="ph-fill ph-leaf text-forest text-2xl"></i>
+                <h1 class="text-xl font-bold text-forest tracking-tight">TerraSense</h1>
+            </div>
+            <!-- PWA Badge -->
+            <div class="flex items-center space-x-1.5 bg-green-50 text-forest px-3 py-1 rounded-full text-xs font-semibold border border-green-100 shadow-sm">
+                <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                <span>Offline Ready</span>
+            </div>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto sidebar-scroll p-6" id="panel-content">
+            
+            <!-- Placeholder -->
+            <div id="ui-placeholder" class="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-100 transition-opacity duration-300">
+                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-2 shadow-inner">
+                    <i class="ph ph-polygon text-3xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-charcoal">Select Field Area</h3>
+                <p class="text-sm text-gray-500 max-w-[220px]">Use the polygon tool on the map to draw your land boundaries and generate a report.</p>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="ui-loading" class="hidden h-full flex-col items-center justify-center text-center space-y-4">
+                <div class="spinner"></div>
+                <p class="text-sm font-medium text-forest animate-pulse">Analyzing geospatial data...</p>
+            </div>
+
+            <!-- Dashboard Content (Bento Grid) -->
+            <div id="ui-dashboard" class="hidden flex-col space-y-6 pb-2">
+                
+                <div id="pdf-export-area" class="bg-white rounded-xl">
+                    <!-- Title Section for PDF -->
+                    <div class="mb-5">
+                        <h2 class="text-lg font-bold text-charcoal leading-tight">Field Intelligence Report</h2>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center space-x-1">
+                            <i class="ph-fill ph-check-circle text-green-500"></i>
+                            <span>Generated dynamically via TerraSense Agri</span>
+                        </p>
+                    </div>
+
+                    <!-- Bento Grid Layout -->
+                    <div class="grid grid-cols-2 gap-3">
+                        
+                        <!-- Area Card (Full Width) -->
+                        <div class="col-span-2 bg-ivory rounded-xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group hover:border-green-200 transition-colors">
+                            <div class="absolute top-0 right-0 p-3 opacity-5"><i class="ph-fill ph-bounding-box text-6xl"></i></div>
+                            <div class="flex items-center space-x-2 text-sm font-medium text-gray-500 mb-1">
+                                <i class="ph-fill ph-ruler text-forest"></i>
+                                <span>Total Area</span>
+                            </div>
+                            <div class="text-4xl font-bold text-forest tracking-tight"><span id="val-area">0.00</span> <span class="text-lg font-medium text-gray-400">ha</span></div>
+                        </div>
+
+                        <!-- Elevation Card (Half Width) -->
+                        <div class="col-span-1 bg-ivory rounded-xl p-4 shadow-sm border border-gray-100 relative overflow-hidden hover:border-green-200 transition-colors">
+                            <div class="flex items-center space-x-2 text-xs font-medium text-gray-500 mb-2">
+                                <i class="ph-fill ph-mountains text-forest"></i>
+                                <span>Elevation</span>
+                            </div>
+                            <div class="text-2xl font-bold text-charcoal"><span id="val-elev">0</span> <span class="text-sm font-medium text-gray-400">MDPL</span></div>
+                        </div>
+
+                        <!-- Crop Match Card (Half Width) -->
+                        <div class="col-span-1 bg-ivory rounded-xl p-4 shadow-sm border border-gray-100 relative overflow-hidden hover:border-green-200 transition-colors">
+                            <div class="flex items-center space-x-2 text-xs font-medium text-gray-500 mb-2">
+                                <i class="ph-fill ph-plant text-forest"></i>
+                                <span>Crop Match</span>
+                            </div>
+                            <div class="text-2xl font-bold text-forest" id="val-crop">Padi</div>
+                        </div>
+
+                        <!-- Recommendation Card (Full Width) -->
+                        <div class="col-span-2 bg-forest text-white rounded-xl p-5 shadow-md relative overflow-hidden mt-1">
+                            <div class="absolute -right-4 -bottom-4 opacity-10"><i class="ph-fill ph-drop text-7xl"></i></div>
+                            <div class="flex items-center space-x-2 text-sm font-semibold text-green-100 mb-3">
+                                <i class="ph-fill ph-flask"></i>
+                                <span>Fertilizer Recommendation</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-end border-b border-green-700/50 pb-2">
+                                    <span class="text-sm text-green-50">Urea Requirement</span>
+                                    <span class="text-lg font-bold"><span id="val-urea">0</span> kg</span>
+                                </div>
+                                <div class="flex justify-between items-end pt-1">
+                                    <span class="text-sm text-green-50">NPK (Phonska)</span>
+                                    <span class="text-lg font-bold"><span id="val-npk">0</span> kg</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div> <!-- End PDF Export Area -->
+
+                <!-- Premium Features Separator -->
+                <div class="relative py-3">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="w-full border-t border-gray-200"></div>
+                    </div>
+                    <div class="relative flex justify-center">
+                        <span class="bg-white px-3 text-xs font-bold text-warmgold tracking-wider uppercase">Premium Tools</span>
+                    </div>
+                </div>
+
+                <!-- WhatsApp Toggle -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer" id="btn-wa-container">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shadow-sm">
+                            <i class="ph-fill ph-whatsapp-logo text-green-600 text-xl"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-charcoal">WA Reminders</span>
+                            <span class="text-xs text-gray-500">Automated scheduling</span>
+                        </div>
+                    </div>
+                    <!-- Toggle Switch -->
+                    <button id="btn-wa" class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 transition-colors focus:outline-none pointer-events-none shadow-inner">
+                        <span id="btn-wa-thumb" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1 shadow-sm"></span>
+                    </button>
+                </div>
+
+                <!-- Export Blueprint PDF Button -->
+                <button id="btn-export" class="w-full group flex items-center justify-center space-x-2 bg-warmgold hover:bg-yellow-600 active:bg-yellow-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md shadow-warmgold/20 transition-all duration-200 hover:-translate-y-0.5">
+                    <i class="ph-fill ph-file-pdf text-xl group-hover:animate-bounce"></i>
+                    <span>Export Syarat KUR Bank</span>
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-charcoal text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center space-x-3 opacity-0 transition-all duration-300 pointer-events-none z-50 translate-y-4">
+        <i class="ph-fill ph-check-circle text-green-400 text-xl"></i>
+        <span class="font-semibold text-sm tracking-wide">WhatsApp Gateway Connected!</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. Map Initialization ---
+            // Sumedang coordinates
+            const map = L.map('map', {
+                zoomControl: false // Move zoom control to bottom left to not overlap with sidebar
+            }).setView([-6.8398, 107.9253], 13);
+            
+            L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+            // Esri World Imagery
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Add Leaflet.draw
+            const drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            const drawControl = new L.Control.Draw({
+                position: 'topleft',
+                draw: {
+                    polygon: {
+                        allowIntersection: false,
+                        drawError: { color: '#e1e100', message: '<strong>Oh snap!<strong> you can\'t draw that!' },
+                        shapeOptions: { color: '#D97706', weight: 3, fillOpacity: 0.4, fillColor: '#065F46' }
+                    },
+                    polyline: false,
+                    circle: false,
+                    rectangle: false,
+                    circlemarker: false,
+                    marker: false
+                },
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                }
+            });
+            map.addControl(drawControl);
+
+            // --- 2. Logic & UI Elements ---
+            const uiPlaceholder = document.getElementById('ui-placeholder');
+            const uiLoading = document.getElementById('ui-loading');
+            const uiDashboard = document.getElementById('ui-dashboard');
+
+            const valArea = document.getElementById('val-area');
+            const valElev = document.getElementById('val-elev');
+            const valCrop = document.getElementById('val-crop');
+            const valUrea = document.getElementById('val-urea');
+            const valNpk = document.getElementById('val-npk');
+
+            // Handle Polygon Creation
+            map.on(L.Draw.Event.CREATED, function (e) {
+                const layer = e.layer;
+                drawnItems.clearLayers(); // Keep only one field for the dashboard context
+                drawnItems.addLayer(layer);
+
+                // UI Transition: Show Loading
+                uiPlaceholder.classList.add('hidden');
+                uiDashboard.classList.add('hidden');
+                uiLoading.classList.remove('hidden');
+                uiLoading.classList.add('flex');
+
+                // Simulate calculation delay for premium feel
+                setTimeout(() => {
+                    // Calculate area with Turf.js
+                    const geojson = layer.toGeoJSON();
+                    const areaSqMeters = turf.area(geojson);
+                    const areaHectares = (areaSqMeters / 10000).toFixed(2);
+
+                    // Mock Elevation (between 300 and 900)
+                    const elevation = Math.floor(Math.random() * (900 - 300 + 1) + 300);
+                    
+                    // Simple logic for crop based on elevation
+                    let crop = "Padi";
+                    if(elevation > 700) crop = "Kopi";
+                    else if(elevation > 500) crop = "Jagung";
+
+                    // Calculate Fertilizer (Mock formula based on area)
+                    const ureaReq = Math.round(areaHectares * 200); // 200kg per ha
+                    const npkReq = Math.round(areaHectares * 150);  // 150kg per ha
+
+                    // Update UI
+                    valArea.innerText = areaHectares;
+                    valElev.innerText = elevation;
+                    valCrop.innerText = crop;
+                    valUrea.innerText = ureaReq.toLocaleString();
+                    valNpk.innerText = npkReq.toLocaleString();
+
+                    // UI Transition: Show Dashboard
+                    uiLoading.classList.remove('flex');
+                    uiLoading.classList.add('hidden');
+                    uiDashboard.classList.remove('hidden');
+                    uiDashboard.classList.add('flex');
+
+                }, 1500);
+            });
+
+            // Handle delete/edit
+            map.on(L.Draw.Event.DELETED, function(e) {
+                if(drawnItems.getLayers().length === 0) {
+                    uiDashboard.classList.remove('flex');
+                    uiDashboard.classList.add('hidden');
+                    uiPlaceholder.classList.remove('hidden');
+                }
+            });
+
+            // --- 3. Premium Features Actions ---
+            
+            // WhatsApp Toggle
+            const btnWaContainer = document.getElementById('btn-wa-container');
+            const btnWa = document.getElementById('btn-wa');
+            const btnWaThumb = document.getElementById('btn-wa-thumb');
+            const toast = document.getElementById('toast');
+            let isWaEnabled = false;
+
+            btnWaContainer.addEventListener('click', () => {
+                isWaEnabled = !isWaEnabled;
+                if(isWaEnabled) {
+                    btnWa.classList.remove('bg-gray-300');
+                    btnWa.classList.add('bg-forest');
+                    btnWaThumb.classList.remove('translate-x-1');
+                    btnWaThumb.classList.add('translate-x-6');
+                    
+                    // Show Toast with animation
+                    toast.classList.remove('opacity-0', 'translate-y-4');
+                    toast.classList.add('opacity-100', 'translate-y-0');
+                    
+                    setTimeout(() => {
+                        toast.classList.remove('opacity-100', 'translate-y-0');
+                        toast.classList.add('opacity-0', 'translate-y-4');
+                    }, 3500);
+                } else {
+                    btnWa.classList.add('bg-gray-300');
+                    btnWa.classList.remove('bg-forest');
+                    btnWaThumb.classList.add('translate-x-1');
+                    btnWaThumb.classList.remove('translate-x-6');
+                }
+            });
+
+            // PDF Export
+            const btnExport = document.getElementById('btn-export');
+            btnExport.addEventListener('click', () => {
+                const element = document.getElementById('pdf-export-area');
+                
+                const opt = {
+                    margin:       [0.3, 0.3], // top/bottom, left/right
+                    filename:     'TerraSense_Laporan.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+
+                // Visual state for button while generating
+                const originalContent = btnExport.innerHTML;
+                btnExport.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Generating PDF...</span>
+                    </div>
+                `;
+                btnExport.disabled = true;
+                btnExport.classList.add('opacity-80', 'cursor-not-allowed');
+                
+                html2pdf().set(opt).from(element).save().then(() => {
+                    // Reset button state
+                    btnExport.innerHTML = originalContent;
+                    btnExport.disabled = false;
+                    btnExport.classList.remove('opacity-80', 'cursor-not-allowed');
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>

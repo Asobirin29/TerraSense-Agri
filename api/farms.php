@@ -125,6 +125,11 @@ function saveFarm(int $userId): void {
     $lat = (float) ($input['latitude'] ?? 0);
     $lon = (float) ($input['longitude'] ?? 0);
     $notes = sanitize($input['notes'] ?? '');
+    
+    $crop_id = !empty($input['crop_id']) ? sanitize($input['crop_id']) : null;
+    $planting_date = !empty($input['planting_date']) ? sanitize($input['planting_date']) : null;
+    $irrigation_status = !empty($input['irrigation_status']) ? sanitize($input['irrigation_status']) : 'Tidak Ada Irigasi';
+    $is_fertilized = isset($input['is_fertilized']) ? (int) $input['is_fertilized'] : 0;
 
     if (empty($geojson)) {
         jsonResponse(['success' => false, 'message' => 'Data polygon lahan wajib diisi'], 422);
@@ -137,13 +142,13 @@ function saveFarm(int $userId): void {
 
     $db = getDB();
     $stmt = $db->prepare('
-        INSERT INTO farms (user_id, name, geojson, area_ha, elevation, zone, latitude, longitude, notes) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO farms (user_id, name, geojson, area_ha, elevation, zone, latitude, longitude, notes, crop_id, planting_date, irrigation_status, is_fertilized) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
     $stmt->execute([
         $userId, $name, 
         is_string($geojson) ? $geojson : json_encode($geojson),
-        $areaHa, $elevation, $zone, $lat, $lon, $notes
+        $areaHa, $elevation, $zone, $lat, $lon, $notes, $crop_id, $planting_date, $irrigation_status, $is_fertilized
     ]);
 
     $farmId = (int) $db->lastInsertId();
@@ -160,25 +165,41 @@ function saveFarm(int $userId): void {
 // ============================================
 function updateFarm(int $userId): void {
     $input = json_decode(file_get_contents('php://input'), true);
-    $farmId = (int) ($input['id'] ?? 0);
+    $farmId = (int) ($input['id'] ?? $_GET['id'] ?? 0);
 
     if (!$farmId) {
         jsonResponse(['success' => false, 'message' => 'ID lahan wajib diisi'], 422);
     }
 
-    // Verify ownership
+    // Verify ownership and get current values
     $db = getDB();
-    $stmt = $db->prepare('SELECT id FROM farms WHERE id = ? AND user_id = ?');
+    $stmt = $db->prepare('SELECT * FROM farms WHERE id = ? AND user_id = ?');
     $stmt->execute([$farmId, $userId]);
-    if (!$stmt->fetch()) {
+    $currentFarm = $stmt->fetch();
+    if (!$currentFarm) {
         jsonResponse(['success' => false, 'message' => 'Lahan tidak ditemukan'], 404);
     }
 
-    $name = sanitize($input['name'] ?? 'Lahan Saya');
-    $notes = sanitize($input['notes'] ?? '');
+    $name = isset($input['name']) ? sanitize($input['name']) : $currentFarm['name'];
+    $notes = isset($input['notes']) ? sanitize($input['notes']) : $currentFarm['notes'];
+    
+    // For crop_id and planting_date, we need to allow setting them to null explicitly.
+    // If not provided in input, keep current. If provided as empty string, set to null.
+    $crop_id = $currentFarm['crop_id'];
+    if (array_key_exists('crop_id', $input)) {
+        $crop_id = !empty($input['crop_id']) ? sanitize($input['crop_id']) : null;
+    }
+    
+    $planting_date = $currentFarm['planting_date'];
+    if (array_key_exists('planting_date', $input)) {
+        $planting_date = !empty($input['planting_date']) ? sanitize($input['planting_date']) : null;
+    }
+    
+    $irrigation_status = isset($input['irrigation_status']) ? sanitize($input['irrigation_status']) : $currentFarm['irrigation_status'];
+    $is_fertilized = isset($input['is_fertilized']) ? (int) $input['is_fertilized'] : $currentFarm['is_fertilized'];
 
-    $stmt = $db->prepare('UPDATE farms SET name = ?, notes = ? WHERE id = ? AND user_id = ?');
-    $stmt->execute([$name, $notes, $farmId, $userId]);
+    $stmt = $db->prepare('UPDATE farms SET name = ?, notes = ?, crop_id = ?, planting_date = ?, irrigation_status = ?, is_fertilized = ?, updated_at = NOW() WHERE id = ? AND user_id = ?');
+    $stmt->execute([$name, $notes, $crop_id, $planting_date, $irrigation_status, $is_fertilized, $farmId, $userId]);
 
     jsonResponse([
         'success' => true,
@@ -191,7 +212,7 @@ function updateFarm(int $userId): void {
 // ============================================
 function deleteFarm(int $userId): void {
     $input = json_decode(file_get_contents('php://input'), true);
-    $farmId = (int) ($input['id'] ?? 0);
+    $farmId = (int) ($input['id'] ?? $_GET['id'] ?? 0);
 
     if (!$farmId) {
         jsonResponse(['success' => false, 'message' => 'ID lahan wajib diisi'], 422);

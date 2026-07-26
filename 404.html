@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Halaman Tidak Ditemukan - TerraSense Agri</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "background": "#fff8f3",
+              "deep-moss": "#2D4B3F",
+              "primary": "#163429",
+              "sunset-gold": "#E4A853",
+              "warm-parchment": "#F4EDE1",
+              "burnt-terracotta": "#C35E3D",
+              "slate-soil": "#4A4238",
+              "sage-accent": "#8A9A5B",
+              "linen-light": "#FAF9F6",
+            },
+            fontFamily: {
+              "button": ["Plus Jakarta Sans"],
+              "body-sm": ["Plus Jakarta Sans"],
+              "body-md": ["Plus Jakarta Sans"],
+              "headline-lg": ["DM Serif Display"],
+              "display-hero": ["DM Serif Display"],
+              "label-caps": ["Plus Jakarta Sans"],
+            },
+            fontSize: {
+              "button": ["14px", {"lineHeight": "1", "fontWeight": "600"}],
+              "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "700"}],
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background font-body-md text-slate-soil min-h-screen flex items-center justify-center relative overflow-hidden">
+    
+    <!-- Background Decor -->
+    <div class="absolute inset-0 z-0">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-sage-accent/20 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-sunset-gold/10 rounded-full blur-[120px]"></div>
+        <div class="w-full h-full bg-[url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 80 80\'%3E%3Cpath d=\'M0 80 Q40 40 80 80\' fill=\'none\' stroke=\'rgba(74,66,56,0.03)\' stroke-width=\'1\'/%3E%3C/svg%3E')] opacity-50"></div>
+    </div>
+
+    <!-- Container -->
+    <div class="relative z-10 w-full max-w-2xl mx-auto flex flex-col items-center justify-center text-center p-8">
+        <div class="text-sunset-gold mb-6 animate-[bounce_3s_infinite]">
+            <i class="ph-fill ph-map-trifold text-7xl opacity-80"></i>
+        </div>
+        
+        <h1 class="font-display-hero text-8xl md:text-9xl text-deep-moss mb-4 leading-none tracking-tight">404</h1>
+        <h2 class="font-headline-lg text-3xl md:text-4xl text-slate-soil mb-4">Waduh, Anda Tersesat!</h2>
+        <p class="text-slate-soil/70 max-w-md mx-auto mb-10 leading-relaxed text-sm md:text-base">
+            Halaman lahan yang Anda cari tidak dapat ditemukan atau mungkin telah dipindahkan. Mari kembali ke area lahan utama Anda.
+        </p>
+        
+        <a href="/TerraSense-Agri/index.html" class="bg-deep-moss text-white rounded-full px-8 py-4 font-button shadow-lg shadow-deep-moss/20 hover:bg-primary transition-all hover:-translate-y-1 inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">home</span>
+            Kembali ke Beranda
+        </a>
+    </div>
+</body>
+</html>

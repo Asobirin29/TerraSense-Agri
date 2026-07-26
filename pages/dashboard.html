@@ -131,11 +131,40 @@
             background: #2D4B3F;
             border-radius: 10px;
         }
+
+        /* Sidebar Toggle Styles */
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        #top-header, #main-content {
+            transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+        }
+
+        @media (min-width: 768px) {
+            body.sidebar-toggled #sidebar { transform: translateX(-100%); }
+            body.sidebar-toggled #top-header { width: 100% !important; }
+            body.sidebar-toggled #main-content { margin-left: 0 !important; }
+        }
+        @media (max-width: 767px) {
+            #sidebar { transform: translateX(-100%); }
+            body.sidebar-toggled #sidebar { transform: translateX(0); }
+            #sidebar-overlay { display: none; }
+            body.sidebar-toggled #sidebar-overlay { display: block; }
+        }
     </style>
+    <script>
+        function toggleSidebar() {
+            document.body.classList.toggle('sidebar-toggled');
+            if(window.map) setTimeout(() => window.map.invalidateSize(), 300);
+        }
+    </script>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- Sidebar Overlay for mobile -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[55] md:hidden" onclick="toggleSidebar()"></div>
+
 <!-- SideNavBar -->
-<aside class="bg-deep-moss dark:bg-deep-moss text-on-primary dark:text-on-primary font-body-md text-body-md h-screen w-64 fixed left-0 top-0 border-r border-slate-soil/10 shadow-md flex flex-col h-full py-6 z-[60] hidden md:flex">
+<aside id="sidebar" class="bg-deep-moss dark:bg-deep-moss text-on-primary dark:text-on-primary font-body-md text-body-md h-screen w-64 fixed left-0 top-0 border-r border-slate-soil/10 shadow-md flex flex-col h-full py-6 z-[60]">
 <div class="px-6 mb-10">
 <h1 class="font-headline-lg text-headline-lg text-sunset-gold">TerraSense Agri</h1>
 <p class="font-label-caps text-[10px] text-on-primary/60 tracking-widest mt-1">PRECISION FARMING</p>
@@ -150,15 +179,17 @@
 <span class="material-symbols-outlined">map</span>
 <span class="font-button text-button">Peta Lahan</span>
 </a>
-<a class="text-on-primary/70 hover:text-on-primary px-4 py-3 flex items-center gap-3 transition-colors hover:bg-primary-container/20 rounded-lg" href="#">
-<span class="material-symbols-outlined">layers</span>
-<span class="font-button text-button">Analisis Tanah</span>
+<div class="flex flex-col">
+<a class="text-on-primary/70 hover:text-on-primary px-4 py-3 flex items-center gap-3 transition-colors hover:bg-primary-container/20 rounded-lg" href="#" id="toggle-daftar-lahan">
+<span class="material-symbols-outlined">view_list</span>
+<span class="font-button text-button">Daftar Lahan</span>
+<span class="material-symbols-outlined ml-auto transition-transform duration-200" id="daftar-lahan-icon">expand_more</span>
 </a>
-<a class="text-on-primary/70 hover:text-on-primary px-4 py-3 flex items-center gap-3 transition-colors hover:bg-primary-container/20 rounded-lg" href="#">
-<span class="material-symbols-outlined">temp_preferences_custom</span>
-<span class="font-button text-button">Stasiun Cuaca</span>
-</a>
-<a class="text-on-primary/70 hover:text-on-primary px-4 py-3 flex items-center gap-3 transition-colors hover:bg-primary-container/20 rounded-lg" href="#">
+<div id="sidebar-farms-list" class="hidden pl-11 pr-4 py-2 flex-col gap-1 mt-1">
+    <div class="text-on-primary/50 text-xs italic">Memuat lahan...</div>
+</div>
+</div>
+<a class="text-on-primary/70 hover:text-on-primary px-4 py-3 flex items-center gap-3 transition-colors hover:bg-primary-container/20 rounded-lg" href="/TerraSense-Agri/pages/harvest-report.html">
 <span class="material-symbols-outlined">assessment</span>
 <span class="font-button text-button">Laporan Panen</span>
 </a>
@@ -178,37 +209,26 @@
 </div>
 </aside>
 <!-- TopNavBar -->
-<header class="bg-warm-parchment/80 backdrop-blur-md dark:bg-deep-moss/80 text-primary dark:text-primary-fixed fixed top-0 right-0 w-full md:w-[calc(100%-16rem)] z-50 border-b border-slate-soil/10 flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4">
+<header id="top-header" class="bg-warm-parchment/80 backdrop-blur-md dark:bg-deep-moss/80 text-primary dark:text-primary-fixed fixed top-0 right-0 w-full md:w-[calc(100%-16rem)] z-50 border-b border-slate-soil/10 flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4">
 <div class="flex items-center gap-4">
-<button class="md:hidden text-deep-moss">
-<span class="material-symbols-outlined">menu</span>
+<button id="sidebar-toggle" onclick="toggleSidebar()" class="text-deep-moss p-2 hover:bg-slate-soil/10 rounded-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">menu</span>
 </button>
-<div class="hidden md:flex items-center gap-2 px-4 py-2 bg-surface-container rounded-full border border-slate-soil/10 focus-within:ring-1 focus-within:ring-sage-accent transition-all">
-<span class="material-symbols-outlined text-outline">search</span>
-<input class="bg-transparent border-none focus:ring-0 text-body-sm w-64" placeholder="Cari data, lahan, atau laporan..." type="text"/>
-</div>
 </div>
 <div class="flex items-center gap-6">
-<nav class="hidden lg:flex items-center gap-8">
-<a class="font-label-caps text-label-caps text-deep-moss border-b-2 border-burnt-terracotta pb-1" href="#">Pilih Lahan Cepat</a>
-</nav>
 <div class="flex items-center gap-4">
 <button class="p-2 rounded-full hover:bg-primary-container/10 transition-colors relative">
 <span class="material-symbols-outlined">notifications</span>
 <span class="absolute top-2 right-2 w-2 h-2 bg-burnt-terracotta rounded-full"></span>
 </button>
 <div class="flex items-center gap-3 pl-4 border-l border-slate-soil/20">
-<div class="text-right hidden sm:block">
-<p class="font-button text-[12px] leading-none">Petani Modern</p>
-<p class="font-label-caps text-[10px] text-outline">MEMBER PREMIUM</p>
-</div>
-<img onclick="window.location.href='/TerraSense-Agri/pages/profile.html'" style="cursor:pointer;" class="w-10 h-10 rounded-full object-cover border border-sage-accent" data-alt="A professional studio portrait of a confident middle-aged man in modern agricultural attire, set against a soft-focus background of a sun-drenched organic farm. The lighting is warm and natural, reflecting a high-end editorial aesthetic with earthy tones of deep green and terracotta. He wears a clean, charcoal-colored utility shirt, symbolizing a blend of traditional farming and modern management." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6_Api7zl-psJmwqCmc_zhFza5AJw52NFSmtQN4m11jHt0h6dz60oN1YzIYMK-UyWl75vUzdDzxIHHgvfrIMafrJzLI_eqjAFk5V99eBgoqZNIUmw0d8Zm3aQucjZmHKxDCf_HZs6USp3j6BXo8bdz2zOoRk36-5epJ4u11bjrpPr8dgLjL6qCQ2joPUfOR5yQkruwkCIsu24KY8Pm_qGizde1CpPyt2tyQQlOwLapPLb62ao1NVyV8g"/>
+<span onclick="window.location.href='/TerraSense-Agri/pages/profile.html'" style="cursor:pointer;" class="material-symbols-outlined text-4xl text-on-surface-variant hover:text-sage-accent transition-colors">account_circle</span>
 </div>
 </div>
 </div>
 </header>
 <!-- Main Content -->
-<main class="pt-24 pb-12 px-margin-mobile md:px-margin-desktop md:ml-64 transition-all">
+<main id="main-content" class="pt-24 pb-12 px-margin-mobile md:px-margin-desktop ml-0 md:ml-64">
 <!-- Welcome Banner -->
 <section class="mb-10 relative overflow-hidden rounded-xl bg-deep-moss min-h-[220px] flex items-center p-8 md:p-12">
 <div class="absolute inset-0 opacity-20 pointer-events-none">
@@ -242,13 +262,13 @@
 </div>
 <div class="mt-4 flex items-center gap-2 text-outline">
 <span class="material-symbols-outlined text-[18px]">location_on</span>
-<span class="text-[12px]">Tersebar di 3 Wilayah</span>
+<span class="text-[12px]">Tersebar di <span id="stat-zone">3 Wilayah</span></span>
 </div>
 </div>
 <div class="glass-card p-6 rounded-xl border-l-4 border-sunset-gold">
 <p class="font-label-caps text-label-caps text-outline mb-1">TOTAL AREA</p>
 <div class="flex items-baseline gap-2">
-<h3 class="font-stat-value text-stat-value text-deep-moss">145.8</h3>
+<h3 id="stat-area" class="font-stat-value text-stat-value text-deep-moss">145.8</h3>
 <span class="text-body-md font-medium text-deep-moss">Ha</span>
 </div>
 <div class="mt-4 flex items-center gap-2 text-outline">
@@ -259,7 +279,7 @@
 <div class="glass-card p-6 rounded-xl border-l-4 border-burnt-terracotta">
 <p class="font-label-caps text-label-caps text-outline mb-1">TOTAL ANALISIS</p>
 <div class="flex items-baseline gap-2">
-<h3 class="font-stat-value text-stat-value text-deep-moss">342</h3>
+<h3 id="stat-analyses" class="font-stat-value text-stat-value text-deep-moss">342</h3>
 <span class="text-[12px] text-burnt-terracotta font-bold">12 Menunggu</span>
 </div>
 <div class="mt-4 flex items-center gap-2 text-outline">
@@ -296,78 +316,9 @@
                         Lihat Semua <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </button>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<!-- Farm Card 1 -->
-<div class="glass-card group rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border-t-4 border-sage-accent">
-<div class="h-32 relative">
-<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="A lush green drone perspective of a modular vegetable farm in the highlands. The farm shows organized rows of crops with a distinct geometric pattern, bordered by misty mountains. The lighting is soft morning overcast, creating a calm, high-contrast professional agricultural photography look." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAQCruhL17iemtWSAWko_ZNa_VlToNZcfLgFK6zC46ZI_dYo8jNELBXW53jkrB8SBHWGmovM9Fvzs3wevr1B2pql2ebTyEJI6rbj0XwfcxzMgsndud0C-WKNuPme7XYDOjrRHVH9FyYgi_kn7t8tlvM5rVEGUhZTe-THeHX5QBujeHue-ET4dt1fVD68q0EtIzmAkIN8xbReO12pIR3p64JfKiJoMAhyRIscxsc0KFtdlOEOCBnTon-AA')"></div>
-<div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-deep-moss shadow-sm">
-                                AKTIF
-                            </div>
-</div>
-<div class="p-5">
-<h4 class="font-headline-lg text-[20px] text-deep-moss mb-1">Lahan Atas Sukabumi</h4>
-<p class="text-outline text-[12px] flex items-center gap-1 mb-4">
-<span class="material-symbols-outlined text-[14px]">location_on</span> Sukabumi, Jawa Barat
-                            </p>
-<div class="grid grid-cols-3 gap-2 py-3 border-y border-slate-soil/10">
-<div>
-<p class="text-[10px] font-label-caps text-outline">ELEVASI</p>
-<p class="font-button text-deep-moss">650 <span class="text-[10px]">MDPL</span></p>
-</div>
-<div>
-<p class="text-[10px] font-label-caps text-outline">LUAS</p>
-<p class="font-button text-deep-moss">12.5 <span class="text-[10px]">Ha</span></p>
-</div>
-<div>
-<p class="text-[10px] font-label-caps text-outline">ANALISIS</p>
-<p class="font-button text-deep-moss">24 <span class="text-[10px]">Poin</span></p>
-</div>
-</div>
-<div class="mt-4 flex gap-2">
-<button class="flex-1 bg-deep-moss text-white py-2 rounded font-button text-[12px] hover:bg-primary transition-colors">Buka Dashboard</button>
-<button onclick="window.location.href='/TerraSense-Agri/pages/farm-map.html'" class="w-10 h-10 flex items-center justify-center border border-slate-soil/20 rounded text-deep-moss hover:bg-linen-light transition-colors">
-<span class="material-symbols-outlined">map</span>
-</button>
-</div>
-</div>
-</div>
-<!-- Farm Card 2 -->
-<div class="glass-card group rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border-t-4 border-sunset-gold">
-<div class="h-32 relative">
-<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="A detailed aerial shot of a large golden corn field during harvest season. The rows of corn create a rhythmic texture across the landscape. Warm golden hour lighting bathes the field in a rich, amber glow, emphasizing the 'Modern Heritage' brand identity of TerraSense Agri. Professional agricultural aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDred3h_yyoQYoSWuh1Z-_0uvAtJ95zx8bxyn1S4mktEMzvdcfc6-z69uszRbkdXy5o600iggGzj6glPH6vtNBQUpeyNfKTwR2QIz-i336HnozfiYGCbhw3v_GIM2jFRyhjbzsCCysSGLpmpTSrdeVG7i4Nh2kXOxMgWsg__7pR6GVzB-Fcd3Dxnbz6lxQOXgUo0QEqqbv2ARN92q5DrRyqMd-WOE7Oc_NtXkWQLZrrdtyK4TOjjRweLg')"></div>
-<div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-deep-moss shadow-sm">
-                                AKTIF
-                            </div>
-</div>
-<div class="p-5">
-<h4 class="font-headline-lg text-[20px] text-deep-moss mb-1">Lahan Dataran Kendal</h4>
-<p class="text-outline text-[12px] flex items-center gap-1 mb-4">
-<span class="material-symbols-outlined text-[14px]">location_on</span> Kendal, Jawa Tengah
-                            </p>
-<div class="grid grid-cols-3 gap-2 py-3 border-y border-slate-soil/10">
-<div>
-<p class="text-[10px] font-label-caps text-outline">ELEVASI</p>
-<p class="font-button text-deep-moss">45 <span class="text-[10px]">MDPL</span></p>
-</div>
-<div>
-<p class="text-[10px] font-label-caps text-outline">LUAS</p>
-<p class="font-button text-deep-moss">42.8 <span class="text-[10px]">Ha</span></p>
-</div>
-<div>
-<p class="text-[10px] font-label-caps text-outline">ANALISIS</p>
-<p class="font-button text-deep-moss">156 <span class="text-[10px]">Poin</span></p>
-</div>
-</div>
-<div class="mt-4 flex gap-2">
-<button class="flex-1 bg-deep-moss text-white py-2 rounded font-button text-[12px] hover:bg-primary transition-colors">Buka Dashboard</button>
-<button onclick="window.location.href='/TerraSense-Agri/pages/farm-map.html'" class="w-10 h-10 flex items-center justify-center border border-slate-soil/20 rounded text-deep-moss hover:bg-linen-light transition-colors">
-<span class="material-symbols-outlined">map</span>
-</button>
-</div>
-</div>
-</div>
-</div>
+<div id="farms-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Data lahan akan dimuat di sini oleh JavaScript -->
+                    </div>
 </div>
 <!-- Analisis Terbaru (1/3 width on desktop) -->
 <div class="lg:col-span-1">
@@ -419,7 +370,7 @@
         </div>
     </div>
     
-    <script src="/TerraSense-Agri/assets/js/app.js"></script>
+    <script src="/TerraSense-Agri/assets/js/app.js?v=3"></script>
     <script>
     document.addEventListener('DOMContentLoaded', async () => {
         const user = await App.checkAuth();
@@ -470,7 +421,7 @@
             const statZone = document.getElementById('stat-zone');
             
             if(statFarms) App.animateNumber(statFarms, data.farms.length, 0, 600);
-            if(statArea) statArea.innerHTML = `${totalArea.toFixed(2)}<span class="text-[12px] ml-1">Ha</span>`;
+            if(statArea) statArea.textContent = totalArea.toFixed(2);
             if(statAnalyses) App.animateNumber(statAnalyses, totalAnalyses, 0, 600);
 
             // Dominant zone
@@ -483,13 +434,20 @@
                 statZone.textContent = App.getZoneName(dominantZone[0]);
             }
 
+            // Image placeholders based on zone
+            const zoneImages = {
+                'highland': 'https://lh3.googleusercontent.com/aida-public/AB6AXuAQCruhL17iemtWSAWko_ZNa_VlToNZcfLgFK6zC46ZI_dYo8jNELBXW53jkrB8SBHWGmovM9Fvzs3wevr1B2pql2ebTyEJI6rbj0XwfcxzMgsndud0C-WKNuPme7XYDOjrRHVH9FyYgi_kn7t8tlvM5rVEGUhZTe-THeHX5QBujeHue-ET4dt1fVD68q0EtIzmAkIN8xbReO12pIR3p64JfKiJoMAhyRIscxsc0KFtdlOEOCBnTon-AA',
+                'midland': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDred3h_yyoQYoSWuh1Z-_0uvAtJ95zx8bxyn1S4mktEMzvdcfc6-z69uszRbkdXy5o600iggGzj6glPH6vtNBQUpeyNfKTwR2QIz-i336HnozfiYGCbhw3v_GIM2jFRyhjbzsCCysSGLpmpTSrdeVG7i4Nh2kXOxMgWsg__7pR6GVzB-Fcd3Dxnbz6lxQOXgUo0QEqqbv2ARN92q5DrRyqMd-WOE7Oc_NtXkWQLZrrdtyK4TOjjRweLg',
+                'lowland': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDRdM-NdlQ2xwSUMBwSFi62zMZk_Xd2328g8mvqOkJuM32Hh8ZWi1uv-8VkBV72a_xbhWURIuNT7BLwjDdsrqO_Mdata8n-UL9H8DZnqRtYqWysFSlPvhtFq3Q7nSf1jdC618ZuCfdrdJEO9TTwB87c9YXhg1RCv1XeqY2zDR0tqEp_Ex4pBMyvarl_gBYqf08BsmpNSwKUSc4fS2hE3qWmHRkfs_poAsjkBkjuqwXdPPaarNC2Gb4hSw'
+            };
+
             // Render farm cards
             container.innerHTML = data.farms.map((farm, index) => `
                 <div class="glass-card group rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border-t-4 border-sunset-gold cursor-pointer" onclick="window.location.href='/TerraSense-Agri/pages/farm-map.html?id=${farm.id}'">
                     <div class="h-32 relative">
-                        <div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" style="background-image: url('https://images.unsplash.com/photo-1595000000000-111111111111?q=80&w=600&auto=format&fit=crop'); background-color: #2D4B3F;"></div>
+                        <div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" style="background-image: url('${zoneImages[farm.zone] || zoneImages.highland}');"></div>
                         <div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-deep-moss shadow-sm">
-                            ${App.getZoneName(farm.zone).toUpperCase()}
+                            AKTIF
                         </div>
                     </div>
                     <div class="p-5">
@@ -512,7 +470,7 @@
                             </div>
                         </div>
                         <div class="mt-4 flex gap-2">
-                            <a href="/TerraSense-Agri/pages/farm-map.html?id=${farm.id}" class="flex-1 text-center bg-deep-moss text-white py-2 rounded font-button text-[12px] hover:bg-primary transition-colors" onclick="event.stopPropagation();">Buka Peta</a>
+                            <a href="/TerraSense-Agri/pages/farm-map.html?id=${farm.id}" class="flex-1 text-center bg-deep-moss text-white py-2 rounded font-button text-[12px] hover:bg-primary transition-colors" onclick="event.stopPropagation();">Buka Dashboard</a>
                             <button class="w-10 h-10 flex items-center justify-center border border-error/20 rounded text-error hover:bg-error/10 transition-colors" onclick="event.stopPropagation(); confirmDelete(${farm.id}, '${farm.name}');">
                                 <span class="material-symbols-outlined">delete</span>
                             </button>
