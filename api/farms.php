@@ -15,16 +15,18 @@
 require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+
+$allowedOrigin = APP_ENV === 'production' ? 'https://yourdomain.com' : '*';
+header('Access-Control-Allow-Origin: ' . $allowedOrigin);
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-session_start();
+startSecureSession();
 $userId = requireAuth();
 
 $action = $_GET['action'] ?? '';
@@ -60,6 +62,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 } else {
     jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+}
+
+// ============================================
+// QUESTIONNAIRE ANSWERS (texture & slope) — invalid values fall back to the given defaults
+// ============================================
+function landAnswers(array $input, ?string $texture, $slope): array {
+    if (isset($input['soil_texture']) && in_array($input['soil_texture'], ['halus', 'agak_halus', 'sedang', 'agak_kasar', 'kasar'], true)) {
+        $texture = $input['soil_texture'];
+    }
+    if (isset($input['slope_pct']) && is_numeric($input['slope_pct']) && $input['slope_pct'] >= 0 && $input['slope_pct'] <= 100) {
+        $slope = (float) $input['slope_pct'];
+    }
+    return [$texture, $slope === null ? null : (float) $slope];
 }
 
 // ============================================
@@ -105,6 +120,17 @@ function getFarmDetail(int $userId, int $farmId): void {
 
     $farm['latest_analysis'] = $latestAnalysis;
 
+    // Get saved evaluations if available
+    $stmtEval = $db->prepare('
+        SELECT e.*, k.nama_komoditas, k.nama_latin, k.icon_emoji, k.kelompok, k.deskripsi_umum
+        FROM evaluations e
+        JOIN komoditas k ON k.id_komoditas = e.id_komoditas
+        WHERE e.id_farm = ?
+        ORDER BY e.skor_kecocokan DESC, e.id_eval ASC
+    ');
+    $stmtEval->execute([$farmId]);
+    $farm['evaluations'] = $stmtEval->fetchAll();
+
     jsonResponse([
         'success' => true,
         'farm' => $farm
@@ -116,20 +142,22 @@ function getFarmDetail(int $userId, int $farmId): void {
 // ============================================
 function saveFarm(int $userId): void {
     $input = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($input)) $input = [];
 
-    $name = sanitize($input['name'] ?? 'Lahan Saya');
-    $geojson = $input['geojson'] ?? '';
-    $areaHa = (float) ($input['area_ha'] ?? 0);
+    $name     = sanitize($input['name'] ?? 'Lahan Saya');
+    $geojson  = $input['geojson'] ?? '';
+    $areaHa   = (float) ($input['area_ha'] ?? 0);
     $elevation = (float) ($input['elevation'] ?? 0);
-    $zone = $input['zone'] ?? 'midland';
-    $lat = (float) ($input['latitude'] ?? 0);
-    $lon = (float) ($input['longitude'] ?? 0);
-    $notes = sanitize($input['notes'] ?? '');
-    
-    $crop_id = !empty($input['crop_id']) ? sanitize($input['crop_id']) : null;
-    $planting_date = !empty($input['planting_date']) ? sanitize($input['planting_date']) : null;
+    $zone     = $input['zone'] ?? 'midland';
+    $lat      = (float) ($input['latitude'] ?? 0);
+    $lon      = (float) ($input['longitude'] ?? 0);
+    $notes    = sanitize($input['notes'] ?? '');
+
+    $crop_id           = !empty($input['crop_id']) ? sanitize($input['crop_id']) : null;
+    $planting_date     = !empty($input['planting_date']) ? sanitize($input['planting_date']) : null;
     $irrigation_status = !empty($input['irrigation_status']) ? sanitize($input['irrigation_status']) : 'Tidak Ada Irigasi';
-    $is_fertilized = isset($input['is_fertilized']) ? (int) $input['is_fertilized'] : 0;
+    $is_fertilized     = isset($input['is_fertilized']) ? (int) $input['is_fertilized'] : 0;
+    [$soil_texture, $slope_pct] = landAnswers($input, null, null);
 
     if (empty($geojson)) {
         jsonResponse(['success' => false, 'message' => 'Data polygon lahan wajib diisi'], 422);
@@ -140,15 +168,21 @@ function saveFarm(int $userId): void {
         $zone = 'midland';
     }
 
+    // Validate coordinates
+    if ($lat < -90 || $lat > 90 || $lon < -180 || $lon > 180) {
+        jsonResponse(['success' => false, 'message' => 'Koordinat tidak valid'], 422);
+    }
+
     $db = getDB();
     $stmt = $db->prepare('
-        INSERT INTO farms (user_id, name, geojson, area_ha, elevation, zone, latitude, longitude, notes, crop_id, planting_date, irrigation_status, is_fertilized) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO farms (user_id, name, geojson, area_ha, elevation, zone, latitude, longitude, notes, crop_id, planting_date, irrigation_status, is_fertilized, soil_texture, slope_pct)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
     $stmt->execute([
-        $userId, $name, 
+        $userId, $name,
         is_string($geojson) ? $geojson : json_encode($geojson),
-        $areaHa, $elevation, $zone, $lat, $lon, $notes, $crop_id, $planting_date, $irrigation_status, $is_fertilized
+        $areaHa, $elevation, $zone, $lat, $lon, $notes, $crop_id, $planting_date, $irrigation_status, $is_fertilized,
+        $soil_texture, $slope_pct
     ]);
 
     $farmId = (int) $db->lastInsertId();
@@ -165,6 +199,7 @@ function saveFarm(int $userId): void {
 // ============================================
 function updateFarm(int $userId): void {
     $input = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($input)) $input = [];
     $farmId = (int) ($input['id'] ?? $_GET['id'] ?? 0);
 
     if (!$farmId) {
@@ -197,9 +232,10 @@ function updateFarm(int $userId): void {
     
     $irrigation_status = isset($input['irrigation_status']) ? sanitize($input['irrigation_status']) : $currentFarm['irrigation_status'];
     $is_fertilized = isset($input['is_fertilized']) ? (int) $input['is_fertilized'] : $currentFarm['is_fertilized'];
+    [$soil_texture, $slope_pct] = landAnswers($input, $currentFarm['soil_texture'], $currentFarm['slope_pct']);
 
-    $stmt = $db->prepare('UPDATE farms SET name = ?, notes = ?, crop_id = ?, planting_date = ?, irrigation_status = ?, is_fertilized = ?, updated_at = NOW() WHERE id = ? AND user_id = ?');
-    $stmt->execute([$name, $notes, $crop_id, $planting_date, $irrigation_status, $is_fertilized, $farmId, $userId]);
+    $stmt = $db->prepare('UPDATE farms SET name = ?, notes = ?, crop_id = ?, planting_date = ?, irrigation_status = ?, is_fertilized = ?, soil_texture = ?, slope_pct = ?, updated_at = NOW() WHERE id = ? AND user_id = ?');
+    $stmt->execute([$name, $notes, $crop_id, $planting_date, $irrigation_status, $is_fertilized, $soil_texture, $slope_pct, $farmId, $userId]);
 
     jsonResponse([
         'success' => true,
@@ -219,11 +255,24 @@ function deleteFarm(int $userId): void {
     }
 
     $db = getDB();
-    $stmt = $db->prepare('DELETE FROM farms WHERE id = ? AND user_id = ?');
+    $stmt = $db->prepare('SELECT id FROM farms WHERE id = ? AND user_id = ?');
     $stmt->execute([$farmId, $userId]);
-
-    if ($stmt->rowCount() === 0) {
+    if (!$stmt->fetch()) {
         jsonResponse(['success' => false, 'message' => 'Lahan tidak ditemukan'], 404);
+    }
+
+    // Tables created by migrate.php have no foreign keys, so delete child rows explicitly
+    try {
+        $db->beginTransaction();
+        $db->prepare('DELETE FROM farm_analyses WHERE farm_id = ?')->execute([$farmId]);
+        $db->prepare('DELETE FROM harvest_logs WHERE farm_id = ?')->execute([$farmId]);
+        $db->prepare('DELETE FROM evaluations WHERE id_farm = ?')->execute([$farmId]);
+        $db->prepare('DELETE FROM farms WHERE id = ? AND user_id = ?')->execute([$farmId, $userId]);
+        $db->commit();
+    } catch (PDOException $e) {
+        $db->rollBack();
+        logError('farms - delete', $e);
+        jsonResponse(['success' => false, 'message' => 'Gagal menghapus lahan. Silakan coba lagi.'], 500);
     }
 
     jsonResponse([

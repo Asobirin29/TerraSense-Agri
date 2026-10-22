@@ -10,16 +10,18 @@
 require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+
+$allowedOrigin = APP_ENV === 'production' ? 'https://yourdomain.com' : '*';
+header('Access-Control-Allow-Origin: ' . $allowedOrigin);
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-session_start();
+startSecureSession();
 $userId = requireAuth();
 
 $action = $_GET['action'] ?? 'get';

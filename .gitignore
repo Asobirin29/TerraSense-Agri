@@ -1,3 +1,7 @@
 node_modules/
 git_runner.php
-uploads/
+design/
+uploads/*
+!uploads/.htaccess
+!uploads/avatars/
+!uploads/avatars/.gitkeep

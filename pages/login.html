@@ -4,167 +4,617 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masuk - TerraSense Agri</title>
-    
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
-    <script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              "background": "#fff8f3",
-              "deep-moss": "#2D4B3F",
-              "primary": "#163429",
-              "sunset-gold": "#E4A853",
-              "warm-parchment": "#F4EDE1",
-              "burnt-terracotta": "#C35E3D",
-              "slate-soil": "#4A4238",
-              "sage-accent": "#8A9A5B",
-              "linen-light": "#FAF9F6",
-              "error": "#ba1a1a",
-              "error-container": "#ffdad6",
-              "on-error-container": "#93000a",
-            },
-            fontFamily: {
-              "button": ["Plus Jakarta Sans"],
-              "body-sm": ["Plus Jakarta Sans"],
-              "body-md": ["Plus Jakarta Sans"],
-              "headline-lg": ["DM Serif Display"],
-              "display-hero": ["DM Serif Display"],
-              "label-caps": ["Plus Jakarta Sans"],
-            },
-            fontSize: {
-              "button": ["14px", {"lineHeight": "1", "fontWeight": "600"}],
-              "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "700"}],
-            }
-          },
-        },
-      }
-    </script>
     <style>
-        .glass-panel {
-            background: rgba(250, 249, 246, 0.85);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(74, 66, 56, 0.1);
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --sage:        #5a8a60;
+            --sage-light:  #7ab880;
+            --terracotta:  #c67b5c;
+            --bark:        #f0e8d8;
+            --bark-dim:    rgba(240,232,216,0.6);
+            --bark-muted:  rgba(240,232,216,0.35);
+            --base:        #080d08;
+            --surface:     #111811;
+            --card:        rgba(255,255,255,0.04);
+            --card-border: rgba(255,255,255,0.08);
+            --input-bg:    rgba(255,255,255,0.05);
+            --input-border:rgba(255,255,255,0.1);
+            --input-focus: rgba(90,138,96,0.5);
+        }
+
+        html, body { height: 100%; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--base);
+            color: var(--bark);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ===== BACKGROUND ===== */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+        }
+        .bg-blob-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(90,138,96,0.1) 0%, transparent 70%);
+            top: -200px; left: -200px;
+            animation: blobFloat 20s ease-in-out infinite;
+        }
+        .bg-blob-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(198,123,92,0.07) 0%, transparent 70%);
+            bottom: -150px; right: -150px;
+            animation: blobFloat 25s ease-in-out infinite reverse;
+        }
+        .bg-blob-3 {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(90,138,96,0.05) 0%, transparent 70%);
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            animation: blobFloat 15s ease-in-out infinite;
+            animation-delay: -8s;
+        }
+
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(90,138,96,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(90,138,96,0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 20%, transparent 80%);
+        }
+
+        @keyframes blobFloat {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            50%       { transform: translate(20px,-30px) scale(1.05); }
+        }
+
+        /* ===== LOGIN CARD ===== */
+        .auth-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 960px;
+            margin: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 600px;
+            border-radius: 28px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 40px 120px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+            animation: cardIn 0.7s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* LEFT PANEL */
+        .auth-left {
+            background: linear-gradient(160deg, #0d1f10 0%, #111811 40%, #0a160b 100%);
+            border-right: 1px solid rgba(255,255,255,0.06);
+            padding: 48px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-left::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 30% 40%, rgba(90,138,96,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .auth-left-brand {
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .brand-icon-box {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--sage), #3d7045);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 16px rgba(90,138,96,0.3);
+        }
+
+        .brand-name {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.5rem;
+            color: var(--bark);
+        }
+
+        .brand-name span { color: var(--sage-light); }
+
+        .brand-sub {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--bark-muted);
+            margin-top: 4px;
+        }
+
+        .auth-left-copy {
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-left-copy h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.9rem;
+            font-weight: 400;
+            color: var(--bark);
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .auth-left-copy p {
+            font-size: 0.875rem;
+            color: var(--bark-muted);
+            line-height: 1.7;
+            margin-bottom: 28px;
+        }
+
+        .feature-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.8rem;
+            color: var(--bark-dim);
+        }
+
+        .feature-item i {
+            color: var(--sage-light);
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        /* Deco number */
+        .auth-deco-num {
+            position: absolute;
+            bottom: -30px;
+            right: -30px;
+            font-family: 'DM Serif Display', serif;
+            font-size: 14rem;
+            color: rgba(90,138,96,0.04);
+            line-height: 1;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* RIGHT PANEL */
+        .auth-right {
+            background: #0c130c;
+            padding: 48px 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .auth-right::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(198,123,92,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .auth-form-header {
+            margin-bottom: 32px;
+        }
+
+        .auth-form-header h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            color: var(--bark);
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .auth-form-header p {
+            font-size: 0.85rem;
+            color: var(--bark-muted);
+            line-height: 1.6;
+        }
+
+        /* Error box */
+        .error-box {
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(186,26,26,0.08);
+            border: 1px solid rgba(186,26,26,0.2);
+            color: #ff8c8c;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .error-box.show { display: flex; }
+        .error-box i { color: #ff6b6b; flex-shrink: 0; font-size: 18px; }
+
+        /* Form inputs */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--bark-muted);
+            margin-bottom: 8px;
+        }
+
+        .form-input-wrap {
+            position: relative;
+        }
+
+        .form-input-wrap .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--bark-muted);
+            font-size: 18px;
+            pointer-events: none;
+            transition: color 0.2s;
+        }
+
+        .form-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            padding: 13px 44px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: var(--bark);
+            outline: none;
+            transition: all 0.2s ease;
+            -webkit-text-fill-color: var(--bark);
+        }
+
+        .form-input::placeholder { color: var(--bark-muted); -webkit-text-fill-color: var(--bark-muted); }
+        .form-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #111811 inset !important; -webkit-text-fill-color: var(--bark) !important; }
+
+        .form-input:focus {
+            border-color: rgba(90,138,96,0.6);
+            background: rgba(90,138,96,0.05);
+            box-shadow: 0 0 0 3px rgba(90,138,96,0.1);
+        }
+
+        .form-input:focus + .input-icon,
+        .form-input-wrap:focus-within .input-icon { color: var(--sage-light); }
+
+        .toggle-pw {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--bark-muted);
+            padding: 4px;
+            transition: color 0.2s;
+            display: flex;
+        }
+
+        .toggle-pw:hover { color: var(--bark); }
+
+        .forgot-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .forgot-link {
+            font-size: 0.78rem;
+            color: var(--terracotta);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .forgot-link:hover { color: #d4926f; }
+
+        /* Submit button */
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--sage) 0%, #3d7045 100%);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(90,138,96,0.3);
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: 0.01em;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent);
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(90,138,96,0.4);
+        }
+        .btn-submit:hover::before { opacity: 1; }
+        .btn-submit:active { transform: translateY(0); }
+
+        .btn-submit.loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .divider span {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--bark-muted);
+        }
+
+        /* Secondary button */
+        .btn-secondary {
+            width: 100%;
+            padding: 13px;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--bark-dim);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.15);
+            color: var(--bark);
+            text-decoration: none;
+        }
+
+        /* Back link */
+        .back-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: var(--bark-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--bark); }
+        .back-link i { font-size: 14px; }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .auth-wrapper { grid-template-columns: 1fr; }
+            .auth-left { display: none; }
+            .auth-right { padding: 36px 28px; }
+            .auth-wrapper { border-radius: 20px; }
         }
     </style>
 </head>
-<body class="bg-background font-body-md text-slate-soil min-h-screen flex items-center justify-center relative overflow-hidden">
-    
-    <!-- Background Decor -->
-    <div class="absolute inset-0 z-0">
-        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-sage-accent/20 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-sunset-gold/10 rounded-full blur-[120px]"></div>
-        <div class="w-full h-full bg-[url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 80 80\'%3E%3Cpath d=\'M0 80 Q40 40 80 80\' fill=\'none\' stroke=\'rgba(74,66,56,0.03)\' stroke-width=\'1\'/%3E%3C/svg%3E')] opacity-50"></div>
+<body>
+    <!-- Background -->
+    <div class="bg-canvas">
+        <div class="bg-blob bg-blob-1"></div>
+        <div class="bg-blob bg-blob-2"></div>
+        <div class="bg-blob bg-blob-3"></div>
+        <div class="bg-grid"></div>
     </div>
 
-    <!-- Login Container -->
-    <div class="relative z-10 w-full max-w-5xl mx-auto flex flex-col md:flex-row shadow-2xl rounded-2xl overflow-hidden border border-slate-soil/10 bg-warm-parchment m-4 md:m-8 min-h-[600px]">
-        
-        <!-- Left Side: Branding & Imagery -->
-        <div class="w-full md:w-5/12 bg-deep-moss relative p-12 flex flex-col justify-between text-white overflow-hidden hidden md:flex">
-            <!-- Background Image overlay for texture -->
-            <div class="absolute inset-0 bg-[url('https://lh3.googleusercontent.com/aida-public/AB6AXuDRdM-NdlQ2xwSUMBwSFi62zMZk_Xd2328g8mvqOkJuM32Hh8ZWi1uv-8VkBV72a_xbhWURIuNT7BLwjDdsrqO_Mdata8n-UL9H8DZnqRtYqWysFSlPvhtFq3Q7nSf1jdC618ZuCfdrdJEO9TTwB87c9YXhg1RCv1XeqY2zDR0tqEp_Ex4pBMyvarl_gBYqf08BsmpNSwKUSc4fS2hE3qWmHRkfs_poAsjkBkjuqwXdPPaarNC2Gb4hSw')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-            
-            <div class="relative z-10">
-                <div class="text-sunset-gold mb-4"><i class="ph-fill ph-plant text-4xl"></i></div>
-                <h1 class="font-display-hero text-4xl mb-2 text-warm-parchment">TerraSense Agri</h1>
-                <p class="font-label-caps tracking-widest text-sage-accent text-xs">PRECISION FARMING</p>
+    <div class="auth-wrapper">
+        <!-- Left Panel: Branding -->
+        <div class="auth-left">
+            <div class="auth-left-brand">
+                <div class="brand-logo">
+                    <div class="brand-icon-box">🌿</div>
+                    <div>
+                        <div class="brand-name">Terra<span>Sense</span></div>
+                        <div class="brand-sub">Precision Farming</div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="relative z-10 mt-auto">
-                <h2 class="font-headline-lg text-3xl mb-4 text-white">Selamat Datang Kembali</h2>
-                <p class="text-white/80 font-body-sm leading-relaxed max-w-sm">
-                    Kelola lahan pertanian Anda dan dapatkan wawasan presisi untuk hasil panen yang lebih baik. Platform monitoring agrikultur berbasis data untuk petani modern.
-                </p>
-                
-                <div class="mt-8 space-y-4">
-                    <div class="flex items-center gap-3 text-sm text-white/90 bg-white/10 p-3 rounded-lg backdrop-blur-sm border border-white/10">
-                        <i class="ph-fill ph-map-trifold text-sunset-gold"></i>
+
+            <div class="auth-left-copy">
+                <h2>Selamat Datang Kembali</h2>
+                <p>Kelola lahan pertanian Anda dan dapatkan wawasan presisi untuk hasil panen yang lebih baik.</p>
+
+                <div class="feature-items">
+                    <div class="feature-item">
+                        <i class="ph-fill ph-map-trifold"></i>
                         <span>Pemetaan lahan digital presisi</span>
                     </div>
-                    <div class="flex items-center gap-3 text-sm text-white/90 bg-white/10 p-3 rounded-lg backdrop-blur-sm border border-white/10">
-                        <i class="ph-fill ph-thermometer text-sunset-gold"></i>
+                    <div class="feature-item">
+                        <i class="ph-fill ph-thermometer"></i>
                         <span>Analisis iklim & cuaca real-time</span>
                     </div>
+                    <div class="feature-item">
+                        <i class="ph-fill ph-plant"></i>
+                        <span>Rekomendasi tanaman & pupuk</span>
+                    </div>
                 </div>
             </div>
+
+            <div class="auth-deco-num">🌾</div>
         </div>
-        
-        <!-- Right Side: Form -->
-        <div class="w-full md:w-7/12 bg-linen-light p-8 md:p-16 flex flex-col justify-center">
-            
-            <div class="mb-10 text-center md:text-left">
-                <div class="md:hidden text-deep-moss mb-4"><i class="ph-fill ph-plant text-4xl"></i></div>
-                <h2 class="font-headline-lg text-3xl text-deep-moss mb-2">Masuk ke Akun Anda</h2>
-                <p class="text-slate-soil/70 text-sm">Masukkan email dan kata sandi Anda untuk melanjutkan ke dasbor.</p>
+
+        <!-- Right Panel: Form -->
+        <div class="auth-right">
+            <div class="auth-form-header">
+                <h2>Masuk ke Akun</h2>
+                <p>Masukkan email dan kata sandi Anda untuk melanjutkan.</p>
             </div>
-            
-            <!-- Error Box -->
-            <div id="login-error" class="hidden bg-error-container border border-error/20 text-on-error-container text-sm p-4 rounded-lg mb-6 flex items-start gap-3">
-                <span class="material-symbols-outlined text-error text-[20px]">error</span>
+
+            <!-- Error -->
+            <div id="login-error" class="error-box">
+                <i class="ph ph-warning-circle"></i>
                 <span id="login-error-text">Email atau password salah.</span>
             </div>
-            
-            <form id="login-form" class="space-y-6" autocomplete="on">
-                <div class="space-y-2">
-                    <label for="login-email" class="font-label-caps text-slate-soil/70 uppercase">Email</label>
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-soil/40">mail</span>
-                        <input type="email" id="login-email" class="w-full bg-white border border-slate-soil/20 rounded-lg pl-12 pr-4 py-3.5 focus:ring-1 focus:ring-sage-accent focus:border-sage-accent outline-none transition-all font-body-sm" placeholder="petani@contoh.com" required autocomplete="email">
+
+            <form id="login-form" autocomplete="on">
+                <div class="form-group">
+                    <label class="form-label" for="login-email">Email</label>
+                    <div class="form-input-wrap">
+                        <input type="email" id="login-email" class="form-input"
+                            placeholder="petani@contoh.com" required autocomplete="email">
+                        <span class="material-symbols-outlined input-icon" style="left:auto;right:14px;pointer-events:none;font-size:18px;">mail</span>
                     </div>
                 </div>
-                
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <label for="login-password" class="font-label-caps text-slate-soil/70 uppercase">Kata Sandi</label>
-                        <a href="/TerraSense-Agri/pages/forgot-password.html" class="text-xs font-button text-burnt-terracotta hover:underline">Lupa sandi?</a>
+
+                <div class="form-group">
+                    <div class="forgot-row">
+                        <label class="form-label" for="login-password" style="margin-bottom:0;">Kata Sandi</label>
+                        <a href="/TerraSense-Agri/pages/forgot-password.html" class="forgot-link">Lupa sandi?</a>
                     </div>
-                    <div class="relative password-wrapper">
-                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-soil/40">lock</span>
-                        <input type="password" id="login-password" class="w-full bg-white border border-slate-soil/20 rounded-lg pl-12 pr-12 py-3.5 focus:ring-1 focus:ring-sage-accent focus:border-sage-accent outline-none transition-all font-body-sm" placeholder="••••••••" required autocomplete="current-password">
-                        <button type="button" class="toggle-password absolute right-4 top-1/2 -translate-y-1/2 text-slate-soil/40 hover:text-deep-moss transition-colors" data-target="login-password">
-                            <span class="material-symbols-outlined">visibility</span>
+                    <div class="form-input-wrap" style="margin-top:8px;">
+                        <input type="password" id="login-password" class="form-input"
+                            placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" class="toggle-pw" data-target="login-password">
+                            <span class="material-symbols-outlined" style="font-size:18px;color:var(--bark-muted);">visibility</span>
                         </button>
                     </div>
                 </div>
-                
-                <button type="submit" class="w-full bg-deep-moss text-white rounded-lg py-4 font-button shadow-lg shadow-deep-moss/20 hover:bg-primary transition-all hover:-translate-y-0.5 mt-2 flex items-center justify-center gap-2">
-                    Masuk ke Dasbor
-                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+
+                <button type="submit" class="btn-submit" id="login-btn">
+                    <span>Masuk ke Dasbor</span>
+                    <i class="ph ph-arrow-right"></i>
                 </button>
             </form>
-            
-            <div class="mt-8 relative">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-slate-soil/10"></div>
-                </div>
-                <div class="relative flex justify-center text-xs">
-                    <span class="bg-linen-light px-4 font-label-caps text-slate-soil/50">ATAU</span>
-                </div>
-            </div>
-            
-            <div class="mt-8 text-center">
-                <a href="/TerraSense-Agri/pages/register.html" class="w-full inline-block bg-white border border-slate-soil/20 text-deep-moss rounded-lg py-3.5 font-button hover:bg-warm-parchment/50 transition-colors shadow-sm">
-                    Buat Akun Petani Baru
-                </a>
-            </div>
-            
-            <div class="mt-6 text-center">
-                <a href="/TerraSense-Agri/index.html" class="text-xs text-slate-soil/60 hover:text-burnt-terracotta transition-colors flex items-center justify-center gap-1">
-                    <span class="material-symbols-outlined text-[14px]">home</span> Kembali ke Beranda
-                </a>
-            </div>
-            
+
+            <div class="divider"><span>atau</span></div>
+
+            <a href="/TerraSense-Agri/pages/register.html" class="btn-secondary">
+                Buat Akun Petani Baru
+            </a>
+
+            <a href="/TerraSense-Agri/index.html" class="back-link">
+                <i class="ph ph-house"></i>
+                Kembali ke Beranda
+            </a>
         </div>
     </div>
 
     <script src="/TerraSense-Agri/assets/js/app.js"></script>
     <script src="/TerraSense-Agri/assets/js/auth.js"></script>
+    <script>
+    /* Toggle password visibility */
+    document.querySelectorAll('.toggle-pw').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const inp = document.getElementById(btn.dataset.target);
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                inp.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        });
+    });
+
+    /* Show error helper */
+    function showError(msg) {
+        const box = document.getElementById('login-error');
+        document.getElementById('login-error-text').textContent = msg;
+        box.classList.add('show');
+    }
+    </script>
 </body>
 </html>

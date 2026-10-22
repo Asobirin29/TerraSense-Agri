@@ -130,6 +130,27 @@ const App = {
     },
 
     // ============================================
+    // ESCAPE HELPERS
+    // ============================================
+    // Escape text before putting it into innerHTML
+    escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
+
+    // The API stores text already HTML-escaped (sanitize()); decode it for textContent / input values
+    decodeEntities(str) {
+        if (str === null || str === undefined) return '';
+        const ta = document.createElement('textarea');
+        ta.innerHTML = String(str);
+        return ta.value;
+    },
+
+    // ============================================
     // FORMAT HELPERS
     // ============================================
     formatDate(dateStr) {
@@ -273,15 +294,15 @@ const App = {
                     const cropName = isPlanted ? (crops.find(c => c.id == farm.crop_id || c.name == farm.crop_id)?.name || 'Ditanami') : 'Lahan Kosong';
                     const badgeClass = isPlanted ? 'bg-sage-accent text-primary' : 'bg-white/10 text-white/50';
 
-                    a.className = 'text-on-primary/60 hover:text-on-primary hover:bg-primary-container/20 px-3 py-2 rounded-md transition-colors flex flex-col gap-1';
+                    a.className = 'nav-sub-item';
                     a.innerHTML = `
-                        <div class="flex items-center gap-2 text-sm font-medium">
-                            <span class="material-symbols-outlined text-[16px]">eco</span>
-                            <span class="truncate">${farm.name}</span>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            ${this.getZoneEmoji ? this.getZoneEmoji(farm.zone) : '🌾'} 
+                            <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${farm.name}</span>
                         </div>
-                        <div class="flex items-center justify-between pl-6 mt-0.5">
-                            <span class="text-xs opacity-70">${parseFloat(farm.area_ha).toFixed(2)} Ha</span>
-                            <span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${badgeClass}">${cropName}</span>
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding-left:26px;margin-top:2px;">
+                            <span style="font-size:0.7rem;color:var(--bark-muted);">${parseFloat(farm.area_ha).toFixed(2)} Ha</span>
+                            <span style="font-size:0.6rem;padding:2px 6px;border-radius:4px;background:rgba(90,138,96,0.15);color:var(--sage-light);text-transform:uppercase;font-weight:700;">${cropName}</span>
                         </div>
                     `;
                     listContainer.appendChild(a);

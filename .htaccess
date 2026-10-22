@@ -1,0 +1,10 @@
+# TerraSense Agri — blokir file yang tidak boleh diakses publik (Apache 2.4)
+Options -Indexes
+
+# Arsip, dump SQL, dokumen internal, dan file konfigurasi
+<FilesMatch "\.(tar|zip|gz|sql|md|log|ini|env|bak)$">
+    Require all denied
+</FilesMatch>
+
+# Folder internal: config, sql, docs, design, node_modules, .claude, .git
+RedirectMatch 404 ^/TerraSense-Agri/(config|sql|docs|design|node_modules|TerraSense-Agri-UI|\.claude|\.git)(/|$)

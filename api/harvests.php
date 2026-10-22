@@ -11,16 +11,18 @@
 require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+
+$allowedOrigin = APP_ENV === 'production' ? 'https://yourdomain.com' : '*';
+header('Access-Control-Allow-Origin: ' . $allowedOrigin);
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-session_start();
+startSecureSession();
 $userId = requireAuth();
 
 $action = $_GET['action'] ?? '';
@@ -108,7 +110,8 @@ function getHarvestStats(int $userId): void {
         SELECT 
             DATE_FORMAT(hl.harvest_date, '%Y-%m') as month_key,
             DATE_FORMAT(hl.harvest_date, '%b %y') as month_label,
-            COALESCE(SUM(hl.actual_yield_ton), 0) as total_yield
+            COALESCE(SUM(hl.actual_yield_ton), 0) as total_yield,
+            COALESCE(SUM(hl.estimated_yield_ton), 0) as estimated_yield
         FROM harvest_logs hl
         JOIN farms f ON hl.farm_id = f.id
         WHERE f.user_id = ?
@@ -138,17 +141,17 @@ function getHarvestStats(int $userId): void {
 function saveHarvest(int $userId): void {
     $input = json_decode(file_get_contents('php://input'), true);
 
-    $farmId = (int) ($input['farm_id'] ?? 0);
-    $cropId = sanitize($input['crop_id'] ?? '');
-    $cropName = sanitize($input['crop_name'] ?? '');
+    $farmId      = (int) ($input['farm_id'] ?? 0);
+    $cropId      = sanitize($input['crop_id'] ?? '');   // Default empty string (NOT NULL)
+    $cropName    = sanitize($input['crop_name'] ?? '');
     $plantingDate = sanitize($input['planting_date'] ?? '');
-    $harvestDate = sanitize($input['harvest_date'] ?? date('Y-m-d'));
-    $estYield = isset($input['estimated_yield_ton']) ? (float) $input['estimated_yield_ton'] : null;
-    $actYield = isset($input['actual_yield_ton']) ? (float) $input['actual_yield_ton'] : 0.0;
-    $notes = sanitize($input['notes'] ?? '');
+    $harvestDate  = sanitize($input['harvest_date'] ?? date('Y-m-d'));
+    $estYield    = isset($input['estimated_yield_ton']) ? (float) $input['estimated_yield_ton'] : null;
+    $actYield    = isset($input['actual_yield_ton'])    ? (float) $input['actual_yield_ton']    : 0.0;
+    $notes       = sanitize($input['notes'] ?? '');
 
     if (!$farmId || empty($cropName) || empty($plantingDate)) {
-        jsonResponse(['success' => false, 'message' => 'Data input tidak lengkap'], 422);
+        jsonResponse(['success' => false, 'message' => 'Data input tidak lengkap (farm_id, crop_name, planting_date wajib diisi)'], 422);
     }
 
     $db = getDB();

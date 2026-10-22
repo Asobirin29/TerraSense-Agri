@@ -21,13 +21,23 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.toggle-password').forEach(btn => {
         btn.addEventListener('click', () => {
             const input = btn.parentElement.querySelector('input');
-            const icon = btn.querySelector('.eye-icon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.innerHTML = '<i class="ph ph-eye-slash"></i>';
-            } else {
-                input.type = 'password';
-                icon.innerHTML = '<i class="ph ph-eye"></i>';
+            const icon = btn.querySelector('.material-symbols-outlined') || btn.querySelector('.eye-icon') || btn;
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    if (icon.classList.contains('material-symbols-outlined')) {
+                        icon.textContent = 'visibility_off';
+                    } else {
+                        icon.innerHTML = '<i class="ph ph-eye-slash"></i>';
+                    }
+                } else {
+                    input.type = 'password';
+                    if (icon.classList.contains('material-symbols-outlined')) {
+                        icon.textContent = 'visibility';
+                    } else {
+                        icon.innerHTML = '<i class="ph ph-eye"></i>';
+                    }
+                }
             }
         });
     });
@@ -92,12 +102,13 @@ async function handleRegister(e) {
     const btn = e.target.querySelector('button[type="submit"]');
     const errorEl = document.getElementById('register-error');
 
-    const name = document.getElementById('reg-name').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const password = document.getElementById('reg-password').value;
-    const confirmPassword = document.getElementById('reg-confirm-password').value;
-    const phone = document.getElementById('reg-phone').value.trim();
-    const location = document.getElementById('reg-location').value.trim();
+    const name = document.getElementById('reg-name')?.value?.trim() || '';
+    const email = document.getElementById('reg-email')?.value?.trim() || '';
+    const password = document.getElementById('reg-password')?.value || '';
+    const confirmPasswordEl = document.getElementById('reg-confirm-password');
+    const confirmPassword = confirmPasswordEl ? confirmPasswordEl.value : null;
+    const phone = document.getElementById('reg-phone')?.value?.trim() || '';
+    const location = document.getElementById('reg-location')?.value?.trim() || 'Sumedang, Jawa Barat';
 
     // Validation
     if (!name || name.length < 2) {
@@ -112,7 +123,7 @@ async function handleRegister(e) {
         showFormError(errorEl, 'Password harus minimal 6 karakter');
         return;
     }
-    if (password !== confirmPassword) {
+    if (confirmPassword !== null && password !== confirmPassword) {
         showFormError(errorEl, 'Konfirmasi password tidak cocok');
         return;
     }
@@ -148,14 +159,20 @@ async function handleRegister(e) {
 
 function showFormError(el, message) {
     if (el) {
-        el.textContent = message;
-        el.style.display = 'block';
+        const textSpan = el.querySelector('span[id$="-text"]');
+        if (textSpan) {
+            textSpan.textContent = message;
+        } else {
+            // Fallback if wiped out
+            el.innerHTML = `<span class="material-symbols-outlined text-error text-[20px]">error</span><span id="${el.id}-text">${message}</span>`;
+        }
+        el.classList.remove('hidden');
+        el.style.display = '';
     }
 }
 
 function hideFormError(el) {
     if (el) {
-        el.textContent = '';
-        el.style.display = 'none';
+        el.classList.add('hidden');
     }
 }

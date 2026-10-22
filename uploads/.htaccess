@@ -1,0 +1,11 @@
+# Folder upload: hanya gambar yang boleh disajikan, skrip tidak boleh dieksekusi
+Options -Indexes
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+RemoveHandler .php .phtml .phar
+RemoveType .php .phtml .phar
+
+<FilesMatch "\.(?!(jpe?g|png|webp)$)[^.]+$">
+    Require all denied
+</FilesMatch>
