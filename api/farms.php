@@ -13,6 +13,7 @@
 // ============================================
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/services/CycleService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
@@ -131,6 +132,13 @@ function getFarmDetail(int $userId, int $farmId): void {
     $stmtEval->execute([$farmId]);
     $farm['evaluations'] = $stmtEval->fetchAll();
 
+    // Active planting cycle (musim tanam) with its fertilizer/cost summary
+    $activeCycle = CycleService::getActiveCycle($db, $farmId);
+    if ($activeCycle) {
+        $activeCycle['summary'] = CycleService::summarize($db, $activeCycle);
+    }
+    $farm['active_cycle'] = $activeCycle;
+
     jsonResponse([
         'success' => true,
         'farm' => $farm
@@ -186,6 +194,7 @@ function saveFarm(int $userId): void {
     ]);
 
     $farmId = (int) $db->lastInsertId();
+    CycleService::syncFromFarm($db, $farmId);
 
     jsonResponse([
         'success' => true,
@@ -236,6 +245,7 @@ function updateFarm(int $userId): void {
 
     $stmt = $db->prepare('UPDATE farms SET name = ?, notes = ?, crop_id = ?, planting_date = ?, irrigation_status = ?, is_fertilized = ?, soil_texture = ?, slope_pct = ?, updated_at = NOW() WHERE id = ? AND user_id = ?');
     $stmt->execute([$name, $notes, $crop_id, $planting_date, $irrigation_status, $is_fertilized, $soil_texture, $slope_pct, $farmId, $userId]);
+    CycleService::syncFromFarm($db, $farmId);
 
     jsonResponse([
         'success' => true,
@@ -267,6 +277,8 @@ function deleteFarm(int $userId): void {
         $db->prepare('DELETE FROM farm_analyses WHERE farm_id = ?')->execute([$farmId]);
         $db->prepare('DELETE FROM harvest_logs WHERE farm_id = ?')->execute([$farmId]);
         $db->prepare('DELETE FROM evaluations WHERE id_farm = ?')->execute([$farmId]);
+        $db->prepare('DELETE FROM farm_activities WHERE farm_id = ?')->execute([$farmId]);
+        $db->prepare('DELETE FROM planting_cycles WHERE farm_id = ?')->execute([$farmId]);
         $db->prepare('DELETE FROM farms WHERE id = ? AND user_id = ?')->execute([$farmId, $userId]);
         $db->commit();
     } catch (PDOException $e) {

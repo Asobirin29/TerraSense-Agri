@@ -9,6 +9,7 @@
 // ============================================
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/services/CycleService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -146,21 +147,41 @@ function saveHarvest(int $userId): void {
     $cropName    = sanitize($input['crop_name'] ?? '');
     $plantingDate = sanitize($input['planting_date'] ?? '');
     $harvestDate  = sanitize($input['harvest_date'] ?? date('Y-m-d'));
-    $estYield    = isset($input['estimated_yield_ton']) ? (float) $input['estimated_yield_ton'] : null;
+    $estYield    = isset($input['estimated_yield_ton']) && $input['estimated_yield_ton'] !== '' ? (float) $input['estimated_yield_ton'] : null;
     $actYield    = isset($input['actual_yield_ton'])    ? (float) $input['actual_yield_ton']    : 0.0;
     $notes       = sanitize($input['notes'] ?? '');
 
-    if (!$farmId || empty($cropName) || empty($plantingDate)) {
-        jsonResponse(['success' => false, 'message' => 'Data input tidak lengkap (farm_id, crop_name, planting_date wajib diisi)'], 422);
+    if (!$farmId) {
+        jsonResponse(['success' => false, 'message' => 'Data input tidak lengkap (farm_id wajib diisi)'], 422);
+    }
+    if (!CycleService::validDate($harvestDate) || $actYield < 0) {
+        jsonResponse(['success' => false, 'message' => 'Tanggal panen atau hasil panen tidak valid'], 422);
     }
 
     $db = getDB();
 
     // Verify ownership of the farm
-    $stmt = $db->prepare('SELECT id FROM farms WHERE id = ? AND user_id = ?');
-    $stmt->execute([$farmId, $userId]);
-    if (!$stmt->fetch()) {
+    if (!CycleService::findFarm($db, $farmId, $userId)) {
         jsonResponse(['success' => false, 'message' => 'Lahan tidak ditemukan atau bukan milik Anda'], 404);
+    }
+
+    // The harvest closes a planting cycle: the given one, or the farm's active one
+    $cycle = !empty($input['cycle_id'])
+        ? CycleService::findCycle($db, (int) $input['cycle_id'], $userId)
+        : CycleService::getActiveCycle($db, $farmId);
+    if ($cycle && ((int) $cycle['farm_id'] !== $farmId || $cycle['status'] !== 'aktif')) {
+        jsonResponse(['success' => false, 'message' => 'Musim tanam ini sudah ditutup'], 409);
+    }
+    if ($cycle) {
+        if ($cropName === '') $cropName = $cycle['crop_name'];
+        if ($plantingDate === '') $plantingDate = $cycle['planting_date'];
+    }
+
+    if (empty($cropName) || empty($plantingDate)) {
+        jsonResponse(['success' => false, 'message' => 'Data input tidak lengkap (crop_name, planting_date wajib diisi)'], 422);
+    }
+    if ($harvestDate < $plantingDate) {
+        jsonResponse(['success' => false, 'message' => 'Tanggal panen tidak boleh sebelum tanggal tanam'], 422);
     }
 
     try {
@@ -168,20 +189,20 @@ function saveHarvest(int $userId): void {
 
         // 1. Insert into harvest_logs
         $stmt = $db->prepare('
-            INSERT INTO harvest_logs (farm_id, crop_id, crop_name, planting_date, harvest_date, estimated_yield_ton, actual_yield_ton, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO harvest_logs (farm_id, crop_id, crop_name, planting_date, harvest_date, estimated_yield_ton, actual_yield_ton, notes, cycle_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
-            $farmId, $cropId, $cropName, $plantingDate, $harvestDate, $estYield, $actYield, $notes
+            $farmId, $cropId, $cropName, $plantingDate, $harvestDate, $estYield, $actYield, $notes, $cycle['id'] ?? null
         ]);
 
-        // 2. Reset the farm's active crop status (freeing it up for new cycle)
-        $stmt = $db->prepare('
-            UPDATE farms 
-            SET crop_id = NULL, planting_date = NULL, is_fertilized = 0, updated_at = NOW() 
-            WHERE id = ?
-        ');
-        $stmt->execute([$farmId]);
+        // 2. Close the cycle and reset the farm's active crop status (freeing it up for new cycle)
+        if ($cycle) {
+            CycleService::close($db, (int) $cycle['id'], $farmId, 'dipanen', $harvestDate);
+        } else {
+            $db->prepare('UPDATE farms SET crop_id = NULL, planting_date = NULL, is_fertilized = 0, updated_at = NOW() WHERE id = ?')
+               ->execute([$farmId]);
+        }
 
         $db->commit();
 
@@ -192,7 +213,8 @@ function saveHarvest(int $userId): void {
 
     } catch (Exception $e) {
         $db->rollBack();
-        jsonResponse(['success' => false, 'message' => 'Gagal mencatat panen: ' . $e->getMessage()], 500);
+        logError('harvests - save', $e);
+        jsonResponse(['success' => false, 'message' => 'Gagal mencatat panen. Silakan coba lagi.'], 500);
     }
 }
 

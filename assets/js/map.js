@@ -9,7 +9,7 @@ window.initMap = async function () {
     const currentUser = await App.checkAuth();
     if (!currentUser) return;
 
-    const { EnvService, EvalService, FertilizerCalc, UIRenderer, FarmGIS, FarmModal } = window.TerraSense;
+    const { EnvService, EvalService, FertilizerCalc, UIRenderer, FarmGIS, FarmModal, CycleUI } = window.TerraSense;
 
     // 2. GIS INITIALIZATION
     const sumedangCoords = [-6.8500, 107.9167];
@@ -141,9 +141,57 @@ window.initMap = async function () {
         if (applyToInput) {
             const cropInput = document.getElementById('farm-crop');
             if (cropInput) cropInput.value = crop.nama_komoditas;
-            App.toast(`Dosis pupuk ${crop.nama_komoditas} diterapkan!`, 'info');
+
+            if (!currentLoadedFarm) {
+                App.toast(`Dosis pupuk ${crop.nama_komoditas} diterapkan! Simpan lahan untuk mulai mencatat tanam.`, 'info');
+            } else {
+                applyCropToFarm(crop);
+            }
         }
     }
+
+    // Saved farm: start a cycle with this crop, or record the calculator dosage on the active one
+    async function applyCropToFarm(crop) {
+        const cycle = currentLoadedFarm.active_cycle;
+        let saved;
+        if (!cycle) {
+            saved = await CycleUI.openStartCycle({ farm: currentLoadedFarm, crop });
+        } else if ((crop.rekomendasi_pupuk || []).length > 0) {
+            saved = await CycleUI.openApplyDosage({ cycle, presets: crop.rekomendasi_pupuk, sourceCrop: crop.nama_komoditas });
+        } else {
+            App.toast(`Tidak ada dosis standar untuk ${crop.nama_komoditas} pada kelas ini.`, 'info');
+        }
+        if (saved) await refreshCycle();
+    }
+
+    // Reload farm + active cycle without re-running the map analysis
+    async function refreshCycle() {
+        if (!loadedFarmId) return;
+        try {
+            const data = await App.api(`farms.php?id=${loadedFarmId}`);
+            currentLoadedFarm = data.farm;
+            await UIRenderer.renderGrowthMonitoring(currentLoadedFarm);
+        } catch (err) {
+            App.toast('Gagal memuat ulang data tanam: ' + err.message, 'error');
+        }
+    }
+
+    // 5b. PLANTING CYCLE ACTIONS
+    document.getElementById('btn-start-cycle')?.addEventListener('click', async () => {
+        if (!currentLoadedFarm) return;
+        const crop = selectedCrop && !currentLoadedFarm.active_cycle ? selectedCrop : null;
+        if (await CycleUI.openStartCycle({ farm: currentLoadedFarm, crop })) await refreshCycle();
+    });
+
+    document.getElementById('btn-record-activity')?.addEventListener('click', async () => {
+        const cycle = currentLoadedFarm?.active_cycle;
+        if (cycle && await CycleUI.openActivity({ cycle })) await refreshCycle();
+    });
+
+    document.getElementById('btn-trigger-harvest')?.addEventListener('click', async () => {
+        const cycle = currentLoadedFarm?.active_cycle;
+        if (cycle && await CycleUI.openHarvest({ farm: currentLoadedFarm, cycle })) await refreshCycle();
+    });
 
     // 6. ANALYZE POLYGON
     async function analyzePolygon(layer) {
@@ -252,6 +300,11 @@ window.initMap = async function () {
         polygonDrawer.disable();
         if (drawBtn) drawBtn.classList.remove('active');
         loadedFarmId = null;
+        currentLoadedFarm = null;
+        ['growth-monitoring-section', 'no-cycle-section', 'link-farm-history'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
         analyzePolygon(event.layer);
     });
 
@@ -317,7 +370,7 @@ window.initMap = async function () {
                 else simSlope.value = '35';
             }
 
-            // Growth monitoring section
+            // Planting cycle section (musim tanam)
             UIRenderer.renderGrowthMonitoring(farm);
 
             // Render polygon on map and analyze

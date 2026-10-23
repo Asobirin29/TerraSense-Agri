@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS harvest_logs (
     estimated_yield_ton DECIMAL(10,2) DEFAULT NULL,
     actual_yield_ton    DECIMAL(10,2) NOT NULL DEFAULT 0,
     notes               TEXT DEFAULT NULL,
+    cycle_id            INT NULL, -- planting_cycles.id (NULL untuk log lama)
     created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_farm_id      (farm_id),
     INDEX idx_harvest_date (harvest_date),
@@ -145,6 +146,53 @@ CREATE TABLE IF NOT EXISTS password_resets (
     used_at    DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. Musim Tanam (satu siklus 'aktif' per lahan, dijaga oleh API)
+CREATE TABLE IF NOT EXISTS planting_cycles (
+    id                    INT AUTO_INCREMENT PRIMARY KEY,
+    farm_id               INT NOT NULL,
+    user_id               INT NOT NULL,
+    komoditas_id          INT NULL,
+    crop_name             VARCHAR(100) NOT NULL,
+    planting_date         DATE NOT NULL,
+    expected_harvest_days INT NOT NULL DEFAULT 100,
+    area_ha               FLOAT DEFAULT 0,
+    status                ENUM('aktif', 'dipanen', 'gagal') NOT NULL DEFAULT 'aktif',
+    seed_cost             DECIMAL(12,2) NULL,
+    notes                 TEXT NULL,
+    ended_at              DATE NULL,
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_farm_status (farm_id, status),
+    INDEX idx_user_id (user_id),
+    FOREIGN KEY (farm_id) REFERENCES farms(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. Kegiatan Lahan per Musim Tanam (pupuk, pengairan, observasi)
+CREATE TABLE IF NOT EXISTS farm_activities (
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    cycle_id         INT NOT NULL,
+    farm_id          INT NOT NULL,
+    type             ENUM('pupuk', 'pengairan', 'observasi', 'lainnya') NOT NULL,
+    activity_date    DATE NOT NULL,
+    fertilizer_name  VARCHAR(100) NULL,
+    fertilizer_phase VARCHAR(50) NULL,
+    amount           DECIMAL(10,2) NULL,
+    unit             VARCHAR(20) NULL,
+    water_method     VARCHAR(50) NULL,
+    duration_min     INT NULL,
+    growth_stage     VARCHAR(50) NULL,
+    plant_height_cm  DECIMAL(8,2) NULL,
+    `condition`      ENUM('baik', 'sedang', 'buruk') NULL,
+    pest_disease     VARCHAR(255) NULL,
+    cost             DECIMAL(12,2) NULL,
+    notes            TEXT NULL,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_cycle_date (cycle_id, activity_date),
+    INDEX idx_farm_id (farm_id),
+    FOREIGN KEY (cycle_id) REFERENCES planting_cycles(id) ON DELETE CASCADE,
+    FOREIGN KEY (farm_id) REFERENCES farms(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

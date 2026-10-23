@@ -705,6 +705,14 @@ body {
     text-decoration: none;
 }
 
+.farm-btn-secondary {
+    background: rgba(255,255,255,0.04);
+    color: var(--bark-dim);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.farm-btn-secondary:hover { background: rgba(255,255,255,0.08); color: var(--bark); text-decoration: none; }
+
 .farm-btn-danger {
     background: rgba(248,113,113,0.06);
     color: var(--red);
@@ -1292,7 +1300,7 @@ async function loadFarms() {
             <div class="farm-card" onclick="window.location.href='/TerraSense-Agri/pages/farm-map.html?id=${farm.id}'">
                 <div class="farm-thumb">
                     ${zoneEmojis[farm.zone] || '🌾'}
-                    <div class="farm-badge">AKTIF</div>
+                    <div class="farm-badge">${farm.crop_id && farm.planting_date ? App.escapeHtml(App.decodeEntities(farm.crop_id)) : 'KOSONG'}</div>
                 </div>
                 <div class="farm-body">
                     <div class="farm-name">${farm.name}</div>
@@ -1319,6 +1327,11 @@ async function loadFarms() {
                            class="farm-btn farm-btn-primary" onclick="event.stopPropagation()">
                             <i class="ph ph-arrow-square-out" style="font-size:13px;"></i>
                             Buka
+                        </a>
+                        <a href="/TerraSense-Agri/pages/farm-detail.html?id=${farm.id}"
+                           class="farm-btn farm-btn-secondary" onclick="event.stopPropagation()" title="Riwayat tanam, pupuk & panen">
+                            <i class="ph ph-clock-counter-clockwise" style="font-size:13px;"></i>
+                            Riwayat
                         </a>
                         <button class="farm-btn farm-btn-danger"
                             onclick="event.stopPropagation(); confirmDelete(${farm.id}, '${farm.name}')">

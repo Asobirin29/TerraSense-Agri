@@ -401,6 +401,19 @@ body {
 .btn-primary:hover { filter: brightness(1.1); }
 .btn-terra { background: var(--terracotta); color: #fff; border: none; }
 .btn-terra:hover { filter: brightness(1.1); }
+a.btn-action { text-decoration: none; }
+
+/* Planting cycle (musim tanam) */
+.cycle-fert-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+.cycle-fert-text { font-size: 0.7rem; color: var(--bark-dim); margin-top: 4px; line-height: 1.4; }
+.cycle-actions { display: flex; gap: 8px; }
+.cycle-actions .btn-action { flex: 1; }
 
 /* Switch */
 .switch-wrap {

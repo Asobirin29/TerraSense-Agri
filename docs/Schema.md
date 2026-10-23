@@ -89,3 +89,17 @@ CREATE TABLE IF NOT EXISTS pupuk_standar (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET FOREIGN_KEY_CHECKS = 1;
+```
+
+## 2. Tracking Musim Tanam (implementasi aktual: `api/migrate.php`, `sql/schema.sql`)
+
+| Tabel | Fungsi |
+|---|---|
+| `planting_cycles` | Satu musim tanam per lahan: `farm_id`, `crop_name`, `komoditas_id`, `planting_date`, `expected_harvest_days`, `area_ha`, `status` (`aktif` / `dipanen` / `gagal`), `seed_cost`, `ended_at`. Maksimal satu `aktif` per lahan. |
+| `farm_activities` | Kegiatan dalam satu musim: `type` (`pupuk` / `pengairan` / `observasi` / `lainnya`), `activity_date`, kolom khusus per jenis (pupuk: `fertilizer_name`, `amount`, `unit`; pengairan: `water_method`, `duration_min`; observasi: `growth_stage`, `plant_height_cm`, `condition`, `pest_disease`), `cost`, `notes`. |
+| `harvest_logs.cycle_id` | Menautkan hasil panen ke musim tanamnya (NULL untuk log lama). |
+
+`farms.crop_id`, `farms.planting_date`, dan `farms.is_fertilized` tetap dipertahankan sebagai cache dari siklus aktif.
+
+```sql
+-- lihat sql/schema.sql bagian 10 & 11

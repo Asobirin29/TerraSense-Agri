@@ -149,46 +149,47 @@ window.TerraSense.UIRenderer = {
     },
 
     /**
-     * Render growth monitoring widget if farm is planted.
+     * Render the planting cycle (musim tanam) widget of a saved farm:
+     * growth phase from the cycle's own harvest age, last fertilizing, yield estimate,
+     * or a "Mulai Tanam" prompt when the farm has no active cycle.
      */
-    renderGrowthMonitoring(farm) {
+    async renderGrowthMonitoring(farm) {
+        const { CycleUI } = window.TerraSense;
         const section = document.getElementById('growth-monitoring-section');
-        if (!section || !farm.crop_id || !farm.planting_date) return;
+        const emptySection = document.getElementById('no-cycle-section');
+        const historyLink = document.getElementById('link-farm-history');
+        if (!section) return;
 
-        section.style.display = 'block';
-        const plantingDate = new Date(farm.planting_date);
-        const today = new Date();
-        const daysElapsed = Math.max(0, Math.floor((today - plantingDate) / (1000 * 60 * 60 * 24)));
-        const estDays = 100; // standard estimation
-        const percent = Math.min(100, Math.round((daysElapsed / estDays) * 100));
-
-        const stageBadge = document.getElementById('res-growth-stage');
-        if (stageBadge) {
-            stageBadge.textContent = percent > 85 ? 'Siap Panen' : (percent > 40 ? 'Generatif' : 'Vegetatif');
+        if (historyLink) {
+            historyLink.href = `/TerraSense-Agri/pages/farm-detail.html?id=${encodeURIComponent(farm.id)}`;
+            historyLink.style.display = 'flex';
         }
+
+        const cycle = farm.active_cycle;
+        section.style.display = cycle ? 'block' : 'none';
+        if (emptySection) emptySection.style.display = cycle ? 'none' : 'block';
+        if (!cycle) return;
+
+        const g = CycleUI.growth(cycle);
+        const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+
+        setText('res-growth-stage', g.stage);
+        setText('res-growth-days-elapsed', `Hari ke-${g.days}`);
+        setText('res-growth-days-total', `${g.total} Hari`);
+        setText('res-cycle-crop', App.decodeEntities(cycle.crop_name));
         const bar = document.getElementById('res-growth-bar');
-        if (bar) bar.style.width = `${percent}%`;
+        if (bar) bar.style.width = `${g.percent}%`;
 
-        const elapsedEl = document.getElementById('res-growth-days-elapsed');
-        if (elapsedEl) elapsedEl.textContent = `Hari ke-${daysElapsed}`;
+        const summary = cycle.summary || {};
+        const last = summary.last_fertilizing;
+        setText('res-last-fertilizing', last
+            ? `Terakhir: ${App.decodeEntities(last.fertilizer_name)} ${CycleUI.formatAmount(last.amount)} ${last.unit} · ${App.timeAgo(last.activity_date + 'T00:00:00')}`
+            : 'Belum ada catatan pemupukan');
+        setText('res-fert-totals', (summary.fertilizers || []).length
+            ? 'Total musim ini: ' + summary.fertilizers.map(f => `${App.decodeEntities(f.name)} ${CycleUI.formatAmount(f.total)} ${f.unit}`).join(', ')
+            : '');
 
-        const totalEl = document.getElementById('res-growth-days-total');
-        if (totalEl) totalEl.textContent = `${estDays} Hari`;
-
-        const fertToggle = document.getElementById('toggle-fertilizer');
-        if (fertToggle) {
-            fertToggle.checked = (farm.is_fertilized == 1);
-            fertToggle.onchange = async () => {
-                try {
-                    await App.api('farms.php?action=update', {
-                        method: 'POST',
-                        body: JSON.stringify({ id: farm.id, is_fertilized: fertToggle.checked ? 1 : 0 }),
-                    });
-                    App.toast('Status pemupukan diperbarui!', 'success');
-                } catch (e) {
-                    App.toast('Gagal memperbarui status pemupukan', 'error');
-                }
-            };
-        }
+        const estimate = await CycleUI.estimateYield(cycle.crop_name, parseFloat(cycle.area_ha) || parseFloat(farm.area_ha));
+        setText('res-est-yield-value', estimate !== null ? `${estimate.toLocaleString('id-ID')} Ton` : '- Ton');
     }
 };

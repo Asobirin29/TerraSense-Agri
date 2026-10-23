@@ -210,6 +210,70 @@ function runMigrations(): bool {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
+        // ============================================
+        // 10. Planting Cycles Table (Musim Tanam)
+        //     One 'aktif' cycle per farm, enforced by the API
+        // ============================================
+        $db->exec("
+            CREATE TABLE IF NOT EXISTS planting_cycles (
+                id                    INT AUTO_INCREMENT PRIMARY KEY,
+                farm_id               INT NOT NULL,
+                user_id               INT NOT NULL,
+                komoditas_id          INT NULL,
+                crop_name             VARCHAR(100) NOT NULL,
+                planting_date         DATE NOT NULL,
+                expected_harvest_days INT NOT NULL DEFAULT 100,
+                area_ha               FLOAT DEFAULT 0,
+                status                ENUM('aktif', 'dipanen', 'gagal') NOT NULL DEFAULT 'aktif',
+                seed_cost             DECIMAL(12,2) NULL,
+                notes                 TEXT NULL,
+                ended_at              DATE NULL,
+                created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_farm_status (farm_id, status),
+                INDEX idx_user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+
+        // ============================================
+        // 11. Farm Activities Table (pupuk, pengairan, observasi)
+        // ============================================
+        $db->exec("
+            CREATE TABLE IF NOT EXISTS farm_activities (
+                id               INT AUTO_INCREMENT PRIMARY KEY,
+                cycle_id         INT NOT NULL,
+                farm_id          INT NOT NULL,
+                type             ENUM('pupuk', 'pengairan', 'observasi', 'lainnya') NOT NULL,
+                activity_date    DATE NOT NULL,
+                fertilizer_name  VARCHAR(100) NULL,
+                fertilizer_phase VARCHAR(50) NULL,
+                amount           DECIMAL(10,2) NULL,
+                unit             VARCHAR(20) NULL,
+                water_method     VARCHAR(50) NULL,
+                duration_min     INT NULL,
+                growth_stage     VARCHAR(50) NULL,
+                plant_height_cm  DECIMAL(8,2) NULL,
+                `condition`      ENUM('baik', 'sedang', 'buruk') NULL,
+                pest_disease     VARCHAR(255) NULL,
+                cost             DECIMAL(12,2) NULL,
+                notes            TEXT NULL,
+                created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_cycle_date (cycle_id, activity_date),
+                INDEX idx_farm_id (farm_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+
+        $ensureColumn('harvest_logs', 'cycle_id', 'INT NULL');
+
+        // Backfill: farms already planted (crop + planting date) get one active cycle
+        $db->exec("
+            INSERT INTO planting_cycles (farm_id, user_id, crop_name, planting_date, area_ha, status)
+            SELECT f.id, f.user_id, f.crop_id, f.planting_date, f.area_ha, 'aktif'
+            FROM farms f
+            WHERE f.crop_id IS NOT NULL AND f.crop_id <> '' AND f.planting_date IS NOT NULL
+              AND NOT EXISTS (SELECT 1 FROM planting_cycles pc WHERE pc.farm_id = f.id AND pc.status = 'aktif')
+        ");
+
         $db->exec('SET FOREIGN_KEY_CHECKS = 1;');
 
         return true;

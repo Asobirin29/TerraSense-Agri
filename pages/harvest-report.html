@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sidebarList = document.getElementById('sidebar-farms-list');
         if (sidebarList && farms.length > 0) {
             sidebarList.innerHTML = farms.map(f => `
-                <a href="/TerraSense-Agri/pages/farm-map.html?id=${encodeURIComponent(f.id)}" class="nav-sub-item">
+                <a href="/TerraSense-Agri/pages/farm-detail.html?id=${encodeURIComponent(f.id)}" class="nav-sub-item">
                     ${App.getZoneEmoji(f.zone)} ${App.escapeHtml(App.decodeEntities(f.name))}
                 </a>`).join('');
         }
@@ -391,7 +391,7 @@ function renderTable(rows) {
         return `
             <tr>
                 <td>${App.formatDate(h.harvest_date)}</td>
-                <td><span style="color:var(--bark);font-weight:500;">${App.escapeHtml(App.decodeEntities(h.farm_name))}</span></td>
+                <td><a href="/TerraSense-Agri/pages/farm-detail.html?id=${encodeURIComponent(h.farm_id)}" title="Lihat riwayat lahan" style="color:var(--bark);font-weight:500;text-decoration:none;border-bottom:1px dashed var(--bark-faint);">${App.escapeHtml(App.decodeEntities(h.farm_name))}</a></td>
                 <td>${App.escapeHtml(App.decodeEntities(h.crop_name))}</td>
                 <td>${area.toFixed(2)} Ha</td>
                 <td style="color:var(--sage-light);font-weight:600;">${total.toFixed(2)} Ton</td>
