@@ -24,10 +24,11 @@ window.TerraSense.EvalService = {
             area_ha: parseFloat(areaHa.toFixed(2)),
             elevation: Math.round(elevation),
             temperature: parseFloat(temperature.toFixed(1)),
-            rainfall: Math.round(rainfall),
             slope: parseFloat(slope),
             texture: texture,
         };
+        // Unknown rainfall is omitted so the evaluator skips it instead of judging a guess
+        if (rainfall !== null && rainfall !== undefined) payload.rainfall = Math.round(rainfall);
 
         if (farmId) payload.farm_id = farmId;
 

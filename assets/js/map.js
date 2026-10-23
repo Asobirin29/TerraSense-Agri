@@ -53,8 +53,8 @@ window.initMap = async function () {
     // 4. APPLICATION STATE
     let currentAreaHa      = 0;
     let currentElevation   = 600;
-    let currentTemperature = 25.0;
-    let currentRainfall    = 2000;
+    let currentTemperature = null;
+    let currentRainfall    = null;
     let currentGeoJSON     = null;
     let currentEvaluations = [];
     let selectedCrop       = null;
@@ -73,7 +73,7 @@ window.initMap = async function () {
         if (resZoneType) resZoneType.textContent = EnvService.getZoneLabel(elevation);
         if (resElevationVal) resElevationVal.textContent = `${Math.round(elevation)} MDPL`;
         if (resTempVal) resTempVal.textContent = `${temperature.toFixed(1)} °C`;
-        if (resRainVal) resRainVal.textContent = `${Math.round(rainfall)} mm/thn`;
+        if (resRainVal) resRainVal.textContent = rainfall !== null ? `${Math.round(rainfall).toLocaleString('id-ID')} mm/thn` : 'Tidak tersedia';
         if (calcAreaLabel) calcAreaLabel.textContent = areaHa.toFixed(2);
 
         if (envDataSection) envDataSection.style.display = 'block';
@@ -152,14 +152,21 @@ window.initMap = async function () {
             currentGeoJSON = feature;
             currentAreaHa = areaHa;
 
-            const [elevation, weather] = await Promise.all([
+            const [elevation, weather, climate] = await Promise.all([
                 EnvService.fetchElevation(centroid.lat, centroid.lon),
                 EnvService.fetchWeather(centroid.lat, centroid.lon),
+                EnvService.fetchAnnualClimate(centroid.lat, centroid.lon),
             ]);
 
+            // Without elevation or any temperature the evaluation would be guesswork
+            const temperature = climate.meanTemperature ?? weather?.temperature ?? null;
+            if (elevation === null || temperature === null) {
+                throw new Error('Data elevasi/iklim dari Open-Meteo tidak tersedia. Periksa koneksi internet lalu coba lagi.');
+            }
+
             currentElevation   = elevation;
-            currentTemperature = weather.temperature;
-            currentRainfall    = EnvService.estimateRainfall(elevation);
+            currentTemperature = temperature;
+            currentRainfall    = climate.annualRainfall; // null = curah hujan tidak dievaluasi
 
             const slope   = parseFloat(simSlope ? simSlope.value : 5);
             const texture = simSoilTexture ? simSoilTexture.value : 'sedang';
