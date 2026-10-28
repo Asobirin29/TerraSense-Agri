@@ -55,7 +55,8 @@ function handleRegister(): void {
     $input = json_decode(file_get_contents('php://input'), true);
 
     $name     = sanitize($input['name'] ?? '');
-    $email    = filter_var($input['email'] ?? '', FILTER_VALIDATE_EMAIL);
+    $rawEmail = strtolower(trim($input['email'] ?? ''));
+    $email    = filter_var($rawEmail, FILTER_VALIDATE_EMAIL);
     $password = $input['password'] ?? '';
     $phone    = sanitize($input['phone'] ?? '');
     $location = sanitize($input['location'] ?? 'Sumedang, Jawa Barat');
@@ -133,7 +134,8 @@ function handleLogin(): void {
     }
 
     $input    = json_decode(file_get_contents('php://input'), true);
-    $email    = filter_var($input['email'] ?? '', FILTER_VALIDATE_EMAIL);
+    $rawEmail = strtolower(trim($input['email'] ?? ''));
+    $email    = filter_var($rawEmail, FILTER_VALIDATE_EMAIL);
     $password = $input['password'] ?? '';
 
     if (!$email || empty($password)) {

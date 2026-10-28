@@ -18,24 +18,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Password visibility toggle
-    document.querySelectorAll('.toggle-password').forEach(btn => {
+    document.querySelectorAll('.toggle-password, .toggle-pw').forEach(btn => {
         btn.addEventListener('click', () => {
-            const input = btn.parentElement.querySelector('input');
-            const icon = btn.querySelector('.material-symbols-outlined') || btn.querySelector('.eye-icon') || btn;
+            const targetId = btn.dataset.target;
+            const input = targetId ? document.getElementById(targetId) : btn.parentElement.querySelector('input');
+            const icon = btn.querySelector('.material-symbols-outlined') || btn.querySelector('.eye-icon') || btn.querySelector('i') || btn;
             if (input) {
                 if (input.type === 'password') {
                     input.type = 'text';
                     if (icon.classList.contains('material-symbols-outlined')) {
                         icon.textContent = 'visibility_off';
-                    } else {
-                        icon.innerHTML = '<i class="ph ph-eye-slash"></i>';
+                    } else if (icon.tagName === 'I') {
+                        icon.className = 'ph ph-eye-slash';
                     }
                 } else {
                     input.type = 'password';
                     if (icon.classList.contains('material-symbols-outlined')) {
                         icon.textContent = 'visibility';
-                    } else {
-                        icon.innerHTML = '<i class="ph ph-eye"></i>';
+                    } else if (icon.tagName === 'I') {
+                        icon.className = 'ph ph-eye';
                     }
                 }
             }
@@ -48,6 +49,16 @@ async function checkIfAlreadyLoggedIn() {
         const res = await fetch(`${App.apiBase}/auth.php?action=check`);
         const data = await res.json();
         if (data.authenticated) {
+            const isRegisterPage = window.location.pathname.includes('register.html');
+            const noticeBox = document.getElementById('already-logged-in-notice');
+            if (isRegisterPage && noticeBox) {
+                const nameEl = document.getElementById('logged-in-username');
+                if (nameEl && data.user?.name) {
+                    nameEl.textContent = data.user.name;
+                }
+                noticeBox.style.display = 'block';
+                return;
+            }
             window.location.href = '/TerraSense-Agri/pages/dashboard.html';
         }
     } catch (err) {
@@ -69,7 +80,7 @@ async function handleLogin(e) {
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner spinner-sm"></span> Memproses...';
+    btn.innerHTML = '<span class="spinner spinner-sm"></span> <span>Memproses...</span>';
     hideFormError(errorEl);
 
     try {
@@ -86,14 +97,14 @@ async function handleLogin(e) {
                 window.location.href = '/TerraSense-Agri/pages/dashboard.html';
             }, 500);
         } else {
-            showFormError(errorEl, data.message);
+            showFormError(errorEl, data.message || 'Email atau password salah');
             btn.disabled = false;
-            btn.innerHTML = 'Masuk ke Dashboard';
+            btn.innerHTML = '<span>Masuk ke Dasbor</span> <i class="ph ph-arrow-right"></i>';
         }
     } catch (err) {
         showFormError(errorEl, 'Gagal terhubung ke server. Periksa koneksi internet.');
         btn.disabled = false;
-        btn.innerHTML = 'Masuk ke Dashboard';
+        btn.innerHTML = '<span>Masuk ke Dasbor</span> <i class="ph ph-arrow-right"></i>';
     }
 }
 
@@ -116,7 +127,7 @@ async function handleRegister(e) {
         return;
     }
     if (!email) {
-        showFormError(errorEl, 'Email harus diisi');
+        showFormError(errorEl, 'Email harus diisi dengan benar');
         return;
     }
     if (password.length < 6) {
@@ -129,7 +140,7 @@ async function handleRegister(e) {
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner spinner-sm"></span> Mendaftarkan...';
+    btn.innerHTML = '<span class="spinner spinner-sm"></span> <span>Mendaftarkan...</span>';
     hideFormError(errorEl);
 
     try {
@@ -144,16 +155,16 @@ async function handleRegister(e) {
             App.toast(data.message, 'success');
             setTimeout(() => {
                 window.location.href = '/TerraSense-Agri/pages/dashboard.html';
-            }, 500);
+            }, 600);
         } else {
-            showFormError(errorEl, data.message);
+            showFormError(errorEl, data.message || 'Pendaftaran gagal. Silakan coba lagi.');
             btn.disabled = false;
-            btn.innerHTML = 'Daftar Sekarang';
+            btn.innerHTML = '<span>Daftar Sekarang</span> <i class="ph ph-user-plus"></i>';
         }
     } catch (err) {
         showFormError(errorEl, 'Gagal terhubung ke server. Periksa koneksi internet.');
         btn.disabled = false;
-        btn.innerHTML = 'Daftar Sekarang';
+        btn.innerHTML = '<span>Daftar Sekarang</span> <i class="ph ph-user-plus"></i>';
     }
 }
 
@@ -163,16 +174,19 @@ function showFormError(el, message) {
         if (textSpan) {
             textSpan.textContent = message;
         } else {
-            // Fallback if wiped out
-            el.innerHTML = `<span class="material-symbols-outlined text-error text-[20px]">error</span><span id="${el.id}-text">${message}</span>`;
+            el.innerHTML = `<i class="ph ph-warning-circle"></i> <span id="${el.id}-text">${message}</span>`;
         }
         el.classList.remove('hidden');
-        el.style.display = '';
+        el.classList.add('show');
+        el.style.display = 'flex';
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
 
 function hideFormError(el) {
     if (el) {
         el.classList.add('hidden');
+        el.classList.remove('show');
+        el.style.display = 'none';
     }
 }
