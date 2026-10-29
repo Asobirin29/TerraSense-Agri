@@ -18,7 +18,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <!-- Precision Farm Map & Land Evaluation Styles -->
-<link rel="stylesheet" href="/TerraSense-Agri/assets/css/farm-map.css?v=3" />
+<link rel="stylesheet" href="/TerraSense-Agri/assets/css/farm-map.css?v=4" />
 </head>
 <body>
 <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -111,10 +111,30 @@
         </button>
     </div>
 
+    <!-- Panel Toggle Controls -->
+    <div class="panel-toggle-bar">
+        <button class="panel-toggle-btn" id="toggle-analisis" onclick="togglePanel('left-panel-analisis')" title="Analisis Lahan Aktif">
+            <i class="ph-fill ph-target"></i>
+            <span>Analisis Lahan</span>
+        </button>
+        <button class="panel-toggle-btn" id="toggle-kalkulator" onclick="togglePanel('left-panel-kalkulator')" title="Kalkulator Pupuk">
+            <i class="ph-fill ph-drop"></i>
+            <span>Kalkulator Pupuk</span>
+        </button>
+        <button class="panel-toggle-btn" id="toggle-rekomendasi" onclick="togglePanel('right-panel-rekomendasi')" title="Rekomendasi Komoditas">
+            <i class="ph-fill ph-sparkle"></i>
+            <span>Rekomendasi</span>
+        </button>
+        <button class="panel-toggle-btn" id="toggle-legenda" onclick="togglePanel('right-panel-legenda')" title="Kelas Kesesuaian Lahan">
+            <i class="ph-fill ph-list-bullets"></i>
+            <span>Legenda</span>
+        </button>
+    </div>
+
     <div class="floating-panel-container">
         <!-- LEFT PANEL -->
         <div id="left-panel">
-            <div class="panel-glass">
+            <div class="panel-glass" id="left-panel-analisis" style="display:none;">
                 <div class="card-section">
                     <div class="card-header">
                         <i class="ph-fill ph-target"></i>
@@ -241,7 +261,7 @@
             </div>
 
             <!-- Fertilizer Calculator Box -->
-            <div class="panel-glass">
+            <div class="panel-glass" id="left-panel-kalkulator" style="display:none;">
                 <div class="card-section fert-box">
                     <div class="card-header" style="justify-content:space-between;">
                         <div style="display:flex;align-items:center;gap:8px;">
@@ -263,7 +283,7 @@
 
         <!-- RIGHT PANEL -->
         <div id="right-panel">
-            <div class="panel-glass" style="flex:1;">
+            <div class="panel-glass" id="right-panel-rekomendasi" style="display:none; flex:1;">
                 <div class="card-section" style="display:flex;flex-direction:column;height:100%;">
                     <div class="card-header" style="justify-content:space-between;margin-bottom:4px;">
                         <div style="display:flex;align-items:center;gap:8px;">
@@ -292,7 +312,7 @@
             </div>
 
             <!-- Legenda -->
-            <div class="panel-glass" style="flex-shrink:0;">
+            <div class="panel-glass" id="right-panel-legenda" style="display:none; flex-shrink:0;">
                 <div class="card-section" style="padding:14px 16px;">
                     <span class="card-title" style="display:block;margin-bottom:8px;font-size:0.68rem;">Kelas Kesesuaian Lahan (Balittanah 2003)</span>
                     <div class="legend-item">
@@ -402,6 +422,34 @@ function toggleSubNav(el, subId) {
     const isOpen = sub.classList.contains('open');
     sub.classList.toggle('open', !isOpen);
     el.classList.toggle('expanded', !isOpen);
+}
+
+// Panel toggle map
+const PANEL_TOGGLE_MAP = {
+    'left-panel-analisis':    'toggle-analisis',
+    'left-panel-kalkulator':  'toggle-kalkulator',
+    'right-panel-rekomendasi':'toggle-rekomendasi',
+    'right-panel-legenda':    'toggle-legenda',
+};
+
+function togglePanel(panelId) {
+    const panel = document.getElementById(panelId);
+    const btnId = PANEL_TOGGLE_MAP[panelId];
+    const btn   = document.getElementById(btnId);
+    if (!panel) return;
+
+    const isVisible = panel.style.display !== 'none';
+    panel.style.display = isVisible ? 'none' : '';
+
+    // Keep inline flex for right-panel-rekomendasi
+    if (panelId === 'right-panel-rekomendasi' && !isVisible) {
+        panel.style.display = 'flex';
+    }
+
+    if (btn) btn.classList.toggle('active', !isVisible);
+
+    // Resize map
+    setTimeout(() => { if(window.map) window.map.invalidateSize(); }, 50);
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
