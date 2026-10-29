@@ -9,7 +9,7 @@ window.initMap = async function () {
     const currentUser = await App.checkAuth();
     if (!currentUser) return;
 
-    const { EnvService, EvalService, FertilizerCalc, UIRenderer, FarmGIS, FarmModal, CycleUI } = window.TerraSense;
+    const { EnvService, EvalService, FertilizerCalc, UIRenderer, FarmGIS, FarmModal, CycleUI, ElevationHeatmap } = window.TerraSense;
 
     // 2. GIS INITIALIZATION
     const sumedangCoords = [-6.8500, 107.9167];
@@ -22,6 +22,7 @@ window.initMap = async function () {
     const saveFarmBtn       = document.getElementById('save-farm-btn');
     const editFarmBtn       = document.getElementById('edit-farm-btn');
     const resetBtn          = document.getElementById('reset-btn');
+    const heatmapToggleBtn  = document.getElementById('heatmap-toggle-btn');
     const resAreaVal        = document.getElementById('res-area-value');
     const resZoneType       = document.getElementById('res-zone-type');
     const resElevationVal   = document.getElementById('res-elevation-val');
@@ -225,6 +226,11 @@ window.initMap = async function () {
             if (!loadedFarmId && saveFarmBtn) saveFarmBtn.classList.remove('hidden');
             if (loadedFarmId && editFarmBtn) editFarmBtn.classList.remove('hidden');
             if (drawBtn) drawBtn.classList.remove('active');
+
+            // ── Elevation Heatmap ──────────────────────────────────────
+            // Show toggle button and auto-initialize heatmap overlay
+            if (heatmapToggleBtn) heatmapToggleBtn.style.display = '';
+            ElevationHeatmap.init(map, feature, true);
         } catch (err) {
             console.error('Error analyzing polygon:', err);
             App.toast(err.message || 'Gagal menganalisis lahan', 'error');
@@ -346,6 +352,17 @@ window.initMap = async function () {
             if (saveFarmBtn) saveFarmBtn.classList.add('hidden');
             if (editFarmBtn) editFarmBtn.classList.add('hidden');
             if (badgeEvalSelected) badgeEvalSelected.style.display = 'none';
+
+            // Destroy heatmap overlay on reset
+            ElevationHeatmap.destroy();
+            if (heatmapToggleBtn) heatmapToggleBtn.style.display = 'none';
+        });
+    }
+
+    // Heatmap toggle button handler
+    if (heatmapToggleBtn) {
+        heatmapToggleBtn.addEventListener('click', () => {
+            ElevationHeatmap.toggle();
         });
     }
 

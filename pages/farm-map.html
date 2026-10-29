@@ -16,6 +16,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- No external heatmap plugin needed — uses custom Canvas IDW layer -->
 
 <!-- Precision Farm Map & Land Evaluation Styles -->
 <link rel="stylesheet" href="/TerraSense-Agri/assets/css/farm-map.css?v=4" />
@@ -108,6 +109,11 @@
         </button>
         <button id="reset-btn" class="map-tool-btn btn-reset hidden" title="Reset atau Hapus Poligon">
             <i class="ph-bold ph-trash"></i> <span>Reset</span>
+        </button>
+        <!-- Heatmap Elevasi toggle -->
+        <button id="heatmap-toggle-btn" title="Tampilkan/Sembunyikan Heatmap Elevasi Lahan" style="display:none;">
+            <i class="ph-fill ph-thermometer"></i>
+            <span>Heatmap Elevasi</span>
         </button>
     </div>
 
@@ -407,7 +413,8 @@
 <script src="/TerraSense-Agri/assets/js/map/ui-renderer.js?v=3"></script>
 <script src="/TerraSense-Agri/assets/js/map/farm-gis.js?v=2"></script>
 <script src="/TerraSense-Agri/assets/js/map/farm-modal.js?v=2"></script>
-<script src="/TerraSense-Agri/assets/js/map.js?v=7"></script>
+<script src="/TerraSense-Agri/assets/js/map/elevation-heatmap.js?v=2"></script>
+<script src="/TerraSense-Agri/assets/js/map.js?v=9"></script>
 <script>
 function toggleSidebar() {
     if (window.innerWidth >= 768) {

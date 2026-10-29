@@ -10,6 +10,9 @@
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Turf.js for polygon spatial ops (heatmap) -->
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+<!-- No external heatmap plugin needed — uses custom Canvas IDW layer -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -236,6 +239,18 @@ body.sidebar-hidden #main-content { margin-left: 0; }
 
         <div class="top-grid">
             <div class="panel">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px 0; gap:8px; flex-shrink:0;">
+                    <span style="font-size:0.68rem; font-weight:600; color:rgba(240,232,216,0.5); text-transform:uppercase; letter-spacing:0.06em;">Peta Lahan</span>
+                    <button id="heatmap-toggle-btn"
+                        title="Tampilkan/Sembunyikan Heatmap Elevasi Lahan"
+                        style="display:none; align-items:center; gap:5px; padding:4px 10px;
+                               background:rgba(8,13,8,0.70); border:1px solid rgba(255,255,255,0.14);
+                               border-radius:8px; color:rgba(240,232,216,0.75); font-size:0.7rem;
+                               font-weight:500; cursor:pointer; backdrop-filter:blur(8px); transition:all 0.2s;">
+                        <i class="ph-fill ph-thermometer" style="font-size:13px;"></i>
+                        <span>Heatmap Elevasi</span>
+                    </button>
+                </div>
                 <div id="mini-map"></div>
             </div>
 
@@ -282,6 +297,7 @@ body.sidebar-hidden #main-content { margin-left: 0; }
 
 <script src="/TerraSense-Agri/assets/js/app.js?v=5"></script>
 <script src="/TerraSense-Agri/assets/js/cycle-ui.js?v=3"></script>
+<script src="/TerraSense-Agri/assets/js/map/elevation-heatmap.js?v=2"></script>
 <script src="/TerraSense-Agri/assets/js/farm-detail.js?v=2"></script>
 <script>
 function toggleSidebar() {

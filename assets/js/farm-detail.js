@@ -76,10 +76,41 @@
         const map = L.map('mini-map', { zoomControl: false, attributionControl: false, scrollWheelZoom: false });
         window.miniMap = map;
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+
         try {
             const geo = typeof farm.geojson === 'string' ? JSON.parse(farm.geojson) : farm.geojson;
             const layer = L.geoJSON(geo, { style: { color: '#8fd496', weight: 2, fillOpacity: 0.15 } }).addTo(map);
-            map.fitBounds(layer.getBounds(), { padding: [20, 20], maxZoom: 17 }); // imagery runs out above ~17
+            map.fitBounds(layer.getBounds(), { padding: [20, 20], maxZoom: 17 });
+
+            // ── Elevation Heatmap (mini-map) ─────────────────────────────
+            // Extract the first polygon feature for heatmap init
+            const geoFeature = (geo.type === 'FeatureCollection') ? geo.features[0] : geo;
+            if (geoFeature && window.TerraSense && window.TerraSense.ElevationHeatmap) {
+                const heatBtn = document.getElementById('heatmap-toggle-btn');
+                if (heatBtn) heatBtn.style.display = 'inline-flex';
+
+                // Auto-init heatmap; show after map finishes fitting bounds
+                setTimeout(() => {
+                    window.TerraSense.ElevationHeatmap.init(map, geoFeature, true);
+                }, 400);
+
+                heatBtn?.addEventListener('click', () => {
+                    window.TerraSense.ElevationHeatmap.toggle();
+                    const label = heatBtn.querySelector('span:last-child');
+                    if (label) label.textContent = window.TerraSense.ElevationHeatmap.isVisible()
+                        ? 'Sembunyikan'
+                        : 'Heatmap Elevasi';
+                    heatBtn.style.background = window.TerraSense.ElevationHeatmap.isVisible()
+                        ? 'rgba(90,138,96,0.20)'
+                        : 'rgba(8,13,8,0.70)';
+                    heatBtn.style.borderColor = window.TerraSense.ElevationHeatmap.isVisible()
+                        ? 'rgba(90,138,96,0.50)'
+                        : 'rgba(255,255,255,0.14)';
+                    heatBtn.style.color = window.TerraSense.ElevationHeatmap.isVisible()
+                        ? '#7ab880'
+                        : 'rgba(240,232,216,0.75)';
+                });
+            }
         } catch (e) {
             if (farm.latitude && farm.longitude) map.setView([farm.latitude, farm.longitude], 15);
         }
